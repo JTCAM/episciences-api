@@ -4,12 +4,11 @@ import json
 import getpass
 import os
 
-url = 'https://api.episciences.org'
-
 
 def fetch_token():
-    username = getpass.getuser()
+    username = input('login:')
     password = getpass.getpass()
+    url = 'https://api.episciences.org'
     r = requests.post(
         url+'/api/login',
         data=json.dumps({'username': username,
@@ -42,21 +41,60 @@ def authenticate():
     return r
 
 
-def list_papers(token):
-    r = requests.get(
-        url+'/api/papers',
-        #        data=json.dumps({'code': 'jtcam'}),
-        headers={
-            "accept": "application/ld+json",
-            "Authorization": f"Bearer {token['token']}"
-        })
+def epi_get_single(req, token, page=1):
+    url = 'https://api.episciences.org'
+    url = url + req + f'?page={page}'
+    print(url)
+    headers = {
+        "accept": "application/ld+json",
+        "Authorization": f"Bearer {token['token']}"
+    }
+    r = requests.get(url, headers=headers)
+    if r.status_code != 200:
+        print(r.status_code)
+        print(r.content)
+        return None
+    # print(r.content)
     r = r.json()
+    r = r['hydra:member']
     return r
 
-    r = json.dumps(r)
+
+def epi_get(req, token):
+    page = 1
+    ret = epi_get_single(req, token, page)
+    if ret is None:
+        return []
+    r = ret.copy()
+    while ret:
+        page += 1
+        r += ret
+        ret = epi_get_single(req, token, page)
+    return r
+
+
+def list_papers(token):
+    r = epi_get('/api/papers', token)
+    return r
+
+
+def list_users(token):
+    r = epi_get('/api/users', token)
+    return r
 
 
 token = authenticate()
 print(token['token'])
-p = list_papers(token)
-print(p)
+print("papers")
+
+papers = list_papers(token)
+for p in papers:
+    print(p['@id'])
+
+print("users")
+users = list_users(token)
+print(users)
+for p in users:
+    print('\n' + '*'*60 + '\n')
+    for k, v in p.items():
+        print(k, v)
