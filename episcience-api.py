@@ -18,7 +18,7 @@ def fetch_token():
         headers={
             "accept": "application/json",
             "Content-Type": "application/json",
-        })
+        }, timeout=1000)
     # print(r.content)
     r = r.json()
     return r
@@ -46,6 +46,7 @@ def epi_get_single(req, token, page=None):
     url = url + req
     if page is not None:
         url += f'?page={page}'
+    # url += '?status=16'
     print(url)
     headers = {
         "accept": "application/ld+json",
@@ -54,7 +55,7 @@ def epi_get_single(req, token, page=None):
     code = 500
 
     while 1:
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, timeout=1000)
         code = r.status_code
         if code == 500:
             continue
@@ -63,12 +64,13 @@ def epi_get_single(req, token, page=None):
             print(r.content)
             return []
         r = r.json()
-        print(r.keys())
+        print('aaaa', code, r)
+        # print(r.keys())
         if 'hydra:member' in r:
             print(r['hydra:totalItems'])
-            print(r['hydra:search'])
+            # print(r['hydra:search'])
             return r['hydra:member']
-
+        
         return r
 
 
@@ -77,16 +79,16 @@ def epi_get(req, token):
     ret = epi_get_single(req, token, page)
     if ret is None:
         return []
-    r = ret.copy()
-    for p in ret:
-        print(p['@id'])
+    r = []
     while ret:
         page += 1
         ret = epi_get_single(req, token, page)
         print('returned len', len(ret))
         for p in ret:
             print(p['@id'])
+        # print(ret)
         r += ret
+        break
     return r
 
 
@@ -121,15 +123,16 @@ for p in papers:
     for k, v in p.items():
         print(k, v)
 
-print("users")
-users = list_users(token)
-print(users)
-for p in users:
-    print('\n' + '*'*60 + '\n')
-    for k, v in p.items():
-        print(k, v)
+# print("users")
+# users = list_users(token)
+# # print(users)
+# for p in users:
+#     print('\n' + '*'*60 + '\n')
+#     for k, v in p.items():
+#         print(k, v)
 
-
-u = get_paper(12602, token)
-for k, v in u.items():
-    print(k, ':', v)
+print('*'*30)
+print('*'*30)
+# u = get_paper(11497, token)
+# for k, v in u.items():
+#     print(k, v)
