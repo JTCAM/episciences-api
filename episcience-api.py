@@ -63,6 +63,7 @@ def authenticate():
             f.write(json.dumps(r))
     if r is None:
         raise RuntimeError("Error fetching the token")
+    print('token:', r['token'][:12], '...')
     return r
 
 ################################################################
