@@ -28,6 +28,21 @@ def fetch_token():
 ################################################################
 
 
+def refresh_token(token):
+    url = 'https://api.episciences.org'
+    r = requests.post(
+        url+'/api/token/refresh',
+        data=json.dumps({'refresh_token': token['refresh_token']}),
+        headers={
+            "accept": "application/json",
+            "Content-Type": "application/json",
+        }, timeout=1000)
+    r = r.json()
+    return r
+
+################################################################
+
+
 def authenticate():
     r = None
     if os.path.exists('token.json'):
@@ -36,6 +51,10 @@ def authenticate():
             r = json.load(f)
             if not check_authentication(r):
                 r = None
+            if r is None:
+                r = refresh_token(r)
+                with open('token.json', 'w') as f:
+                    f.write(json.dumps(r))
         except json.JSONDecodeError:
             pass
     if r is None:
@@ -55,7 +74,7 @@ def check_authentication(token):
         print('Expired token')
         return False
     else:
-        print('Identified:', r)
+        print('Logged:', r['email'])
     return True
 
 ################################################################
