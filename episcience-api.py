@@ -124,7 +124,7 @@ print('*'*60)
 print("Fetch papers")
 papers = list_papers(token)
 print(f'Found {len(papers)} papers')
-print('*'*60)
+
 for p in papers:
     print('\n' + '*'*60 + '\n')
     for k, v in p.items():
