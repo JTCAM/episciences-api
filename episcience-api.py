@@ -122,26 +122,24 @@ token = authenticate()
 # print(token['token'])
 print('*'*60)
 print("Fetch papers")
-print('*'*60)
-
 papers = list_papers(token)
 print(f'Found {len(papers)} papers')
-
-print('*'*60)
-print("Found papers")
 print('*'*60)
 for p in papers:
     print('\n' + '*'*60 + '\n')
     for k, v in p.items():
         print(k, v)
 
-# print("users")
-# users = list_users(token)
-# # print(users)
-# for p in users:
-#     print('\n' + '*'*60 + '\n')
-#     for k, v in p.items():
-#         print(k, v)
+print('*'*60)
+print("Fetch users")
+print('*'*60)
+
+users = list_users(token)
+print(f'Found {len(users)} users')
+for p in users:
+    print('\n' + '*'*60 + '\n')
+    for k, v in p.items():
+        print(k, v)
 
 # u = get_paper(11497, token)
 # for k, v in u.items():
