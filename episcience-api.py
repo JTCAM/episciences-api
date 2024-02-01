@@ -4,6 +4,8 @@ import json
 import getpass
 import os
 
+################################################################
+
 
 def fetch_token():
     username = input('login:')
@@ -23,6 +25,8 @@ def fetch_token():
     r = r.json()
     return r
 
+################################################################
+
 
 def authenticate():
     r = None
@@ -30,15 +34,31 @@ def authenticate():
         try:
             f = open('token.json')
             r = json.load(f)
+            if not check_authentication(r):
+                r = None
         except json.JSONDecodeError:
             pass
-    elif r is None:
+    if r is None:
         r = fetch_token()
         with open('token.json', 'w') as f:
             f.write(json.dumps(r))
-    else:
+    if r is None:
         raise RuntimeError("Error fetching the token")
     return r
+
+################################################################
+
+
+def check_authentication(token):
+    r, code = epi_get_single(f'/api/me', token)
+    if code == 401:
+        print('Expired token')
+        return False
+    else:
+        print('Identified:', r)
+    return True
+
+################################################################
 
 
 def epi_get_single(req, token, page=None):
@@ -47,30 +67,28 @@ def epi_get_single(req, token, page=None):
     if page is not None:
         url += f'?page={page}'
     # url += '?status=16'
-    print(url)
     headers = {
         "accept": "application/ld+json",
         "Authorization": f"Bearer {token['token']}"
     }
     code = 500
-
     while 1:
         r = requests.get(url, headers=headers, timeout=1000)
         code = r.status_code
         if code == 500:
             continue
         if code != 200:
-            print(code)
+            # print(code)
             # print(r.content)
-            return []
+            return [], code
         r = r.json()
         if 'hydra:member' in r:
             print('hydra:totalItems: ', r['hydra:totalItems'])
             # print(r['hydra:search'])
             ret = r['hydra:member']
-            return ret
+            return ret, code
 
-        return r
+        return r, code
 
 ################################################################
 
@@ -81,7 +99,7 @@ def epi_get(req, token):
     page = 0
     while ret:
         page += 1
-        ret = epi_get_single(req, token, page)
+        ret, code = epi_get_single(req, token, page)
         print('returned len', len(ret))
         for p in ret:
             print(p['@id'])
