@@ -48,10 +48,12 @@ def authenticate():
     if os.path.exists('token.json'):
         try:
             f = open('token.json')
-            r = json.load(f)
+            token = json.load(f)
+            r = token.copy()
             if not check_authentication(r):
                 r = None
             if r is None:
+                r = token.copy()
                 r = refresh_token(r)
                 with open('token.json', 'w') as f:
                     f.write(json.dumps(r))
