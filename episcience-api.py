@@ -5,8 +5,11 @@ import getpass
 import os
 
 ################################################################
+class HttpErrorCode(Exception):
+    def __init__(self, code):
+        self.code = code
 
-
+################################################################
 def fetch_token():
     username = input('login:')
     password = getpass.getpass()
@@ -72,23 +75,28 @@ def authenticate():
 
 
 def check_authentication(token):
-    r, code = epi_get_single(f'/api/me', token)
-    if code == 401:
-        print('Expired token')
-        return False
-    else:
-        print('Logged:', r['email'])
+    try:
+        r = epi_get('/api/me', token)
+    except HttpErrorCode as e:
+        if e.code == 401:
+            print('Expired token')
+            return False
+    print('Logged:', r['email'])
     return True
 
 ################################################################
 
 
-def epi_get_single(req, token, page=None):
+def epi_get(req, token, **kwargs):
     url = 'https://api.episciences.org'
     url = url + req
-    if page is not None:
-        url += f'?page={page}'
-    # url += '?status=16'
+    args = []
+    kwargs['pagination'] = 'false'
+    for k, v in kwargs.items():
+        args.append(f'{k}={v}')
+    if args:
+        url += '?'+'&'.join(args)
+    print(url)
     headers = {
         "accept": "application/ld+json",
         "Authorization": f"Bearer {token['token']}"
@@ -100,60 +108,46 @@ def epi_get_single(req, token, page=None):
         if code == 500:
             continue
         if code != 200:
-            # print(code)
-            # print(r.content)
-            return [], code
+            raise HttpErrorCode(code)
         r = r.json()
         if 'hydra:member' in r:
             print('hydra:totalItems: ', r['hydra:totalItems'])
             # print(r['hydra:search'])
             ret = r['hydra:member']
-            return ret, code
+            return ret
 
-        return r, code
+        return r
 
 ################################################################
 
 
-def epi_get(req, token):
-    r = []
-    ret = 1
-    page = 0
-    while ret:
-        page += 1
-        ret, code = epi_get_single(req, token, page)
-        print('returned len', len(ret))
-        for p in ret:
-            print(p['@id'])
-        r += ret
+# rvid = 23 => JTCAM
+def list_papers(token, rvid=23):
+    r = epi_get('/api/papers', token, rvid=rvid)
     return r
 
 ################################################################
 
 
-def list_papers(token):
-    r = epi_get('/api/papers', token)
-    return r
-
-################################################################
-
-
-def list_users(token):
-    r = epi_get('/api/users', token)
+def list_users(token, rvid=23):
+    kwargs ={
+        'userRoles.rvid': rvid
+    }
+    r = epi_get('/api/users', token, **kwargs)
     return r
 
 ################################################################
 
 
 def get_user(uid, token):
-    r = epi_get_single(f'/api/users/{uid}', token)
+    r = epi_get(f'/api/users/{uid}', token)
     return r
 
 ################################################################
 
 
 def get_paper(uid, token):
-    r = epi_get_single(f'/api/papers/{uid}', token)
+    r = epi_get(f'/api/papers/{uid}', token)
     return r
 
 
@@ -167,6 +161,7 @@ print(f'Found {len(papers)} papers')
 
 for p in papers:
     print('\n' + '*'*60 + '\n')
+    print(p)
     for k, v in p.items():
         print(k, v)
 
@@ -181,6 +176,7 @@ for p in users:
     for k, v in p.items():
         print(k, v)
 
-# u = get_paper(11497, token)
-# for k, v in u.items():
-#     print(k, v)
+u = get_paper(11497, token)
+print(u)
+for p in u:
+    print(p)
