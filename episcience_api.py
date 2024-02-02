@@ -5,25 +5,28 @@ import getpass
 import os
 
 ################################################################
+
+
 class HttpErrorCode(Exception):
-    def __init__(self, code):
+    def __init__(self, code, msg):
         self.code = code
 
 ################################################################
+
+
 class EpiscienceDB:
 
     status_codes = {
         'Copy editing': 19,
-        
+
     }
-    
-    # rvid = 23 => JTCAM   
+
+    # rvid = 23 => JTCAM
     def __init__(self, rvid=23):
         self.token = None
         self.authenticate()
         self.rvid = rvid
-            
-    
+
     def fetch_token(self):
         username = input('login:')
         password = getpass.getpass()
@@ -40,6 +43,9 @@ class EpiscienceDB:
             }, timeout=1000)
         # print(r.content)
         r = r.json()
+        if 'code' in r:
+            if r['code'] == 401:
+                raise HttpErrorCode(401)
         self.token = r
 
     def refresh_token(self):
@@ -61,7 +67,7 @@ class EpiscienceDB:
     def write_token_to_file(self):
         with open('token.json', 'w') as f:
             f.write(json.dumps(self.token))
-            
+
     def authenticate(self):
         if os.path.exists('token.json'):
             try:
@@ -73,13 +79,22 @@ class EpiscienceDB:
                     self.refresh_token()
                     print('Refreshed token')
                     self.write_token_to_file()
+                if not self.check_authentication():
+                    self.token = None
             except json.JSONDecodeError:
                 pass
+            except HttpErrorCode as e:
+                print("error during authentication:", e.code)
+                pass
         if self.token is None:
-            self.fetch_token()
-            self.write_token_to_file()
+            try:
+                self.fetch_token()
+                self.write_token_to_file()
+            except HttpErrorCode as e:
+                raise RuntimeError(
+                    "Incorrect login when fetching the token:", e.code)
         if self.token is None:
-            raise RuntimeError("Error fetching the token")
+            raise RuntimeError("Error with the token")
         print('token:', self.token['token'][:12], '...')
 
     def check_authentication(self):
@@ -119,7 +134,7 @@ class EpiscienceDB:
                 # print(r['hydra:search'])
                 ret = r['hydra:member']
                 return ret
-    
+
             return r
 
     def list_papers(self):
@@ -127,9 +142,9 @@ class EpiscienceDB:
         return r
 
     def list_users(self):
-        kwargs ={
+        kwargs = {
             'userRoles.rvid': self.rvid,
-            'pagination':'false'
+            'pagination': 'false'
         }
         r = self.epi_get('/api/users', **kwargs)
         return r
@@ -141,36 +156,42 @@ class EpiscienceDB:
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
         return r
-    
+
 ################################################################
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
+    import streamlit as st
+    st.set_page_config(layout="wide")
     conn = EpiscienceDB()
-    # print(token['token'])
-    print('*'*60)
-    print("Fetch papers")
-    papers = conn.list_papers()
-    print(f'Found {len(papers)} papers')
-    
+
+    if not os.path.exists('papers.json'):
+        papers = conn.list_papers()
+        print(f'Fetched {len(papers)} papers')
+        with open('papers.json', 'w') as f:
+            f.write(json.dumps(papers))
+    else:
+        with open('papers.json') as f:
+            papers = json.load(f)
+
     for p in papers:
-        print('\n' + '*'*60 + '\n')
-        # print(p)
-        for k, v in p.items():
-            print(k, v)
-    
-    print('*'*60)
-    print("Fetch users")
-    print('*'*60)
-    
-    users = conn.list_users()
-    print(f'Found {len(users)} users')
-    for p in users:
-        print('\n' + '*'*60 + '\n')
-        for k, v in p.items():
-            print(k, v)
-    
-    u = conn.get_paper(11497)
-    print(u)
-    for k, v in u.items():
-        print(k, v)
+        with st.expander(p['@id']):
+            for k in p.keys():
+                st.write(f'{k}: {p[k]}')
+
+#     return
+#     print('*'*60)
+#     print("Fetch users")
+#     print('*'*60)
+#
+#     users = conn.list_users()
+#     print(f'Found {len(users)} users')
+#     for p in users:
+#         print('\n' + '*'*60 + '\n')
+#         for k, v in p.items():
+#             print(k, v)
+#
+#     u = conn.get_paper(11497)
+#     print(u)
+#     for k, v in u.items():
+#         print(k, v)
