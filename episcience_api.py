@@ -12,6 +12,11 @@ class HttpErrorCode(Exception):
 ################################################################
 class EpiscienceDB:
 
+    status_codes = {
+        'Copy editing': 19,
+        
+    }
+    
     # rvid = 23 => JTCAM   
     def __init__(self, rvid=23):
         self.token = None
@@ -66,13 +71,13 @@ class EpiscienceDB:
                 if self.token is None:
                     self.read_token_from_file()
                     self.refresh_token()
+                    print('Refreshed token')
                     self.write_token_to_file()
             except json.JSONDecodeError:
                 pass
         if self.token is None:
             self.fetch_token()
-            with open('token.json', 'w') as f:
-                f.write(json.dumps(r))
+            self.write_token_to_file()
         if self.token is None:
             raise RuntimeError("Error fetching the token")
         print('token:', self.token['token'][:12], '...')
@@ -91,7 +96,6 @@ class EpiscienceDB:
         url = 'https://api.episciences.org'
         url = url + req
         args = []
-        kwargs['pagination'] = 'false'
         for k, v in kwargs.items():
             args.append(f'{k}={v}')
         if args:
@@ -119,12 +123,13 @@ class EpiscienceDB:
             return r
 
     def list_papers(self):
-        r = self.epi_get('/api/papers', rvid=self.rvid)
+        r = self.epi_get('/api/papers', rvid=self.rvid, pagination='false')
         return r
 
     def list_users(self):
         kwargs ={
-            'userRoles.rvid': self.rvid
+            'userRoles.rvid': self.rvid,
+            'pagination':'false'
         }
         r = self.epi_get('/api/users', **kwargs)
         return r
