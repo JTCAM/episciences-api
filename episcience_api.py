@@ -127,7 +127,7 @@ class EpiscienceDB:
             if code == 500:
                 continue
             if code != 200:
-                raise HttpErrorCode(code)
+                raise HttpErrorCode(code, f'Failed to perform request: {req}')
             r = r.json()
             if 'hydra:member' in r:
                 print('hydra:totalItems: ', r['hydra:totalItems'])
