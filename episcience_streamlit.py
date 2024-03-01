@@ -7,12 +7,8 @@ import episcience_api as epi
 
 st.set_page_config(layout="wide")
 cookie_manager = stx.CookieManager()
-
 cookies = cookie_manager.get_all()
-should_not_update_cookie = False
-if not cookies:
-    should_not_update_cookie = True
-
+# st.write(cookies)
 ################################################################
 class STEpisciencesDB(epi.EpisciencesDB):
 
@@ -26,21 +22,21 @@ class STEpisciencesDB(epi.EpisciencesDB):
             username = st.text_input('Username', value=username)
             password = st.text_input('API Password', value=password, type='password')
             button = st.form_submit_button('connect')
-            if not button:
-                return
-            if (username == '' or password == '' or 
-                username is None or password is None):
-                st.error("Wrong credentials")
-                return
+            if button:
+                if (username == '' or password == '' or 
+                    username is None or password is None):
+                    st.error("Wrong credentials")
+                    return
 
-            try:
-                super().fetch_token(username, password)
-            except epi.HttpErrorCode as e:
-                st.error("Wrong credentials")
-                raise e
-            if not should_not_update_cookie:
+                try:
+                    super().fetch_token(username, password)
+                except epi.HttpErrorCode as e:
+                    st.error("Wrong credentials")
+                    raise e
+                st.write('pas here')
+                st.write(self.token)
                 cookie_manager.set('episciences_api_token', self.token)
-                box.empty()
+                # box.empty()
         
     def read_token_from_file(self):
         if 'episciences_api_token' in cookies and 'token' in cookies['episciences_api_token']:
@@ -88,9 +84,11 @@ def print_page(conn):
 
 try:
     conn = STEpisciencesDB()
-    lout = st.button('logout')
-    if lout:
+    def reset():
         cookie_manager.set('episciences_api_token', {})
+        os.remove('papers.json')
+        
+    lout = st.button('logout and refresh', on_click=reset) 
         
     print_page(conn)
 except RuntimeError as e:
