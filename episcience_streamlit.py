@@ -77,7 +77,11 @@ def print_page(conn):
         p.identifier = '- ' + '\n - '.join(
             [e.strip() for e in p.identifier if e.strip() != ''])
     st.markdown('Identifiers:\n\n' + p.identifier)
-    st.markdown('Status:' + str(p.status))
+    if p.status in epi.EpisciencesDB.status_codes:
+        p.status = 'Status: ' + epi.EpisciencesDB.status_codes[p.status]
+    else:
+        p.status = f'<text style="background-color:red;"> Status: {p.status} </text>'
+    st.markdown(p.status, unsafe_allow_html=True)
     field = st.selectbox("Choose field", options=dir(p))
     field = getattr(p, field)
     if field is None:
