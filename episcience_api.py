@@ -127,7 +127,7 @@ class EpiscienceDB:
             if code == 500:
                 continue
             if code != 200:
-                raise HttpErrorCode(code)
+                raise HttpErrorCode(code, str(r))
             r = r.json()
             if 'hydra:member' in r:
                 print('hydra:totalItems: ', r['hydra:totalItems'])
@@ -174,10 +174,16 @@ if __name__ == '__main__':
         with open('papers.json') as f:
             papers = json.load(f)
 
-    for p in papers:
-        with st.expander(p['@id']):
-            for k in p.keys():
-                st.write(f'{k}: {p[k]}')
+    sel = st.selectbox("Choose paper", options=[p['docid'] for p in papers])
+    p = conn.get_paper(sel)
+    st.markdown(p['record'], unsafe_allow_html=True)
+    for k, v in p.items():
+        st.write(f'{k}: {v}')
+
+#     for p in papers:
+#         with st.expander(p['@id']):
+#             for k in p.keys():
+#                 st.write(f'{k}: {p[k]}')
 
 #     return
 #     print('*'*60)
