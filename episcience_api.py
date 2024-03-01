@@ -42,10 +42,13 @@ class EpisciencesDB:
 
     status_codes = {
         19: 'Copy editing',
-        16: 'Published',
+        16: 'Published2',
+        6: 'Published',
         5: 'Refused',
         0: 'Submitted',
         2: 'In review',
+        7: 'Pending minor revision',
+        15: 'Pending major revision'
     }
 
     # rvid = 23 => JTCAM
@@ -130,6 +133,8 @@ class EpisciencesDB:
 
     def check_authentication(self):
         if self.token is None:
+            return False
+        if 'token' not in self.token:
             return False
         try:
             r = self.epi_get('/api/me')

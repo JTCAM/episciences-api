@@ -61,7 +61,23 @@ def print_page(conn):
         with open('papers.json') as f:
             papers = json.load(f)
 
-    sel = st.selectbox("Choose paper", options=[p['docid'] for p in papers])
+    codes = epi.EpisciencesDB.status_codes.copy()
+    codes[-1] = 'Unknown'
+    sel_status = st.multiselect("Article status selection",
+                                 ['-1']+list(epi.EpisciencesDB.status_codes.keys()),
+                                 format_func=lambda i: codes[int(i)]
+                                 )
+    sel_status = [int(s) for s in sel_status]
+    st.write(sel_status)
+    st.write()
+    sel = st.selectbox("Choose paper",
+                       options=[
+                           p['docid'] for p in papers
+                           if (p['status'] in sel_status or
+                               (p['status'] not in epi.EpisciencesDB.status_codes and -1 in sel_status))])
+    if sel is None:
+        st.warning('No paper selected')
+        return
     p = conn.get_paper(sel)
 
     if not isinstance(p.title, str):
