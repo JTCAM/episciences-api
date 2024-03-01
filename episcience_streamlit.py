@@ -64,13 +64,17 @@ def print_page(conn):
     p = conn.get_paper(sel)
 
     if not isinstance(p.title, str):
-        p.title = p.title['#text']
+        if isinstance(p.title, list):
+            p.title = p.title[0]   
+        p.title = p.title['#text']   
     st.markdown("## " + p.title)
     if isinstance(p.creator, str):
         p.creator = [p.creator]
     st.markdown("### *" + '; '.join(p.creator) + "*")
     st.markdown('#### submissionDate: '+ p.submissionDate)
     if not isinstance(p.description, str):
+        if isinstance(p.description, list):
+            p.description = p.description[0]   
         p.description = p.description['#text']
     st.markdown(p.description.strip())
     if not isinstance(p.identifier, str):
