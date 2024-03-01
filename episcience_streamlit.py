@@ -2,34 +2,44 @@
 import json
 import os
 import streamlit as st
+import extra_streamlit_components as stx
 import episcience_api as epi
+
+st.set_page_config(layout="wide")
+cookie_manager = stx.CookieManager()
+cookies = cookie_manager.get_all()
+should_not_update_cookie = False
+if not (cookies):
+    should_not_update_cookie = True
+
 ################################################################
 class STEpisciencesDB(epi.EpisciencesDB):
 
-
-    def fetch_token(self):
-        username = st.text_input('Username')
-        password = st.text_input('API Password', type='password')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+    def fetch_token(self, username=None, password=None):
+        username = st.text_input('Username', value=username)
+        password = st.text_input('API Password', value=password, type='password')
         button = st.button('connect')
         if not button:
             return
-        if username == '' or password == '':
+        if (username == '' or password == '' or 
+            username is None or password is None):
             st.error("Wrong credentials")
             return
         
         super().fetch_token(username, password)
+        if not should_not_update_cookie:
+            cookie_manager.set('episciences_api_token', self.token)
 
     def read_token_from_file(self):
-        return
-#        with open('token.json') as f:
-#            self.token = json.load(f)
+        if 'episciences_api_token' in cookies:
+            self.token = cookie_manager.get('episciences_api_token')
 
     def write_token_to_file(self):
-        return
- #       with open('token.json', 'w') as f:
- #           f.write(json.dumps(self.token))
-
-
+        pass
+        
 ################################################################
 def print_page(conn):
     if not os.path.exists('papers.json'):
@@ -66,7 +76,6 @@ def print_page(conn):
         st.write(p.json)
 
 
-st.set_page_config(layout="wide")
 try:
     conn = STEpisciencesDB()
     print_page(conn)
