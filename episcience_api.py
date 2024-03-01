@@ -43,6 +43,9 @@ class EpisciencesDB:
     status_codes = {
         19: 'Copy editing',
         16: 'Published',
+        5: 'Refused',
+        0: 'Submitted',
+        2: 'In review',
     }
 
     # rvid = 23 => JTCAM

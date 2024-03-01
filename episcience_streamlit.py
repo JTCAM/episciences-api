@@ -66,7 +66,8 @@ def print_page(conn):
     if not isinstance(p.title, str):
         if isinstance(p.title, list):
             p.title = p.title[0]   
-        p.title = p.title['#text']   
+        p.title = p.title['#text']
+    p.title = p.title.replace('\n', ' ')
     st.markdown("## " + p.title)
     if isinstance(p.creator, str):
         p.creator = [p.creator]
@@ -74,12 +75,15 @@ def print_page(conn):
     st.markdown('#### submissionDate: '+ p.submissionDate)
     if not isinstance(p.description, str):
         if isinstance(p.description, list):
-            p.description = p.description[0]   
-        p.description = p.description['#text']
+            p.description = p.description[0]
+        if not isinstance(p.description, str):
+            p.description = p.description['#text']
     st.markdown(p.description.strip())
     if not isinstance(p.identifier, str):
         p.identifier = '- ' + '\n - '.join(
             [e.strip() for e in p.identifier if e.strip() != ''])
+    else:
+        p.identifier = '- ' + p.identifier
     st.markdown('Identifiers:\n\n' + p.identifier)
     if p.status in epi.EpisciencesDB.status_codes:
         p.status = 'Status: ' + epi.EpisciencesDB.status_codes[p.status]
