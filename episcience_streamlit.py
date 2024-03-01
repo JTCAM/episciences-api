@@ -33,8 +33,8 @@ class STEpisciencesDB(epi.EpisciencesDB):
                 except epi.HttpErrorCode as e:
                     st.error("Wrong credentials")
                     raise e
-                st.write('pas here')
-                st.write(self.token)
+                # st.write('pas here')
+                # st.write(self.token)
                 cookie_manager.set('episciences_api_token', self.token)
                 # box.empty()
         
