@@ -8,15 +8,13 @@ import episcience_api as epi
 st.set_page_config(layout="wide")
 st.markdown('# Episciences papers explorator')
 main_box = st.container()
-auth_box = st.empty()
+auth_box = st.container()
 
 cookie_manager = None
-cookies = None
-with auth_box:
-    cookie_manager = stx.CookieManager()
-    cookies = cookie_manager.get_all()
-    
+cookie_manager = stx.CookieManager()
+cookies = cookie_manager.get_all()
 # st.write(cookies)
+    
 ################################################################
 class STEpisciencesDB(epi.EpisciencesDB):
 
@@ -74,9 +72,11 @@ def print_page(conn):
     st.markdown('#### submissionDate: '+ p.submissionDate)
     if not isinstance(p.description, str):
         p.description = p.description['#text']
-    st.markdown(p.description.strip())   
-    st.markdown('Identifiers:\n\n- ' + '\n - '.join(
-        [e.strip() for e in p.identifier if e.strip() != '']))
+    st.markdown(p.description.strip())
+    if not isinstance(p.identifier, str):
+        p.identifier = '- ' + '\n - '.join(
+            [e.strip() for e in p.identifier if e.strip() != ''])
+    st.markdown('Identifiers:\n\n' + p.identifier)
     st.markdown('Status:' + str(p.status))
     field = st.selectbox("Choose field", options=dir(p))
     field = getattr(p, field)
@@ -89,14 +89,16 @@ def print_page(conn):
 
 try:
     conn = STEpisciencesDB()
-    auth_box.empty()
+    # auth_box.empty()
     def reset():
         cookie_manager.set('episciences_api_token', {})
         os.remove('papers.json')
         
-    lout = st.button('logout and refresh', on_click=reset) 
-        
-    print_page(conn)
+    with main_box:
+        lout = st.button('logout and refresh', on_click=reset) 
+        # st.write(cookies)
+        print_page(conn)
 except RuntimeError as e:
+    st.error(e)
     pass
 
