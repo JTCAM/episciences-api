@@ -6,8 +6,16 @@ import extra_streamlit_components as stx
 import episcience_api as epi
 
 st.set_page_config(layout="wide")
-cookie_manager = stx.CookieManager()
-cookies = cookie_manager.get_all()
+st.markdown('# Episciences papers explorator')
+main_box = st.container()
+auth_box = st.empty()
+
+cookie_manager = None
+cookies = None
+with auth_box:
+    cookie_manager = stx.CookieManager()
+    cookies = cookie_manager.get_all()
+    
 # st.write(cookies)
 ################################################################
 class STEpisciencesDB(epi.EpisciencesDB):
@@ -16,9 +24,7 @@ class STEpisciencesDB(epi.EpisciencesDB):
         super().__init__(*args, **kwargs)
         
     def fetch_token(self, username=None, password=None):
-        st.markdown('# Episciences papers explorator')
-        box = st.empty()
-        with box.form("Episcience API authentication"):
+        with auth_box.form("Episcience API authentication"):
             username = st.text_input('Username', value=username)
             password = st.text_input('API Password', value=password, type='password')
             button = st.form_submit_button('connect')
@@ -36,7 +42,6 @@ class STEpisciencesDB(epi.EpisciencesDB):
                 # st.write('pas here')
                 # st.write(self.token)
                 cookie_manager.set('episciences_api_token', self.token)
-                # box.empty()
         
     def read_token_from_file(self):
         if 'episciences_api_token' in cookies and 'token' in cookies['episciences_api_token']:
@@ -84,6 +89,7 @@ def print_page(conn):
 
 try:
     conn = STEpisciencesDB()
+    auth_box.empty()
     def reset():
         cookie_manager.set('episciences_api_token', {})
         os.remove('papers.json')
