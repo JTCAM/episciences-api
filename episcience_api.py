@@ -3,7 +3,7 @@ import requests
 import json
 import getpass
 import os
-
+import xmltodict
 ################################################################
 
 
@@ -13,8 +13,31 @@ class HttpErrorCode(Exception):
         self.msg = msg
 
 ################################################################
+class EpiSciencesPaper:
 
+    def __init__(self, json):
+        self.json = json
+        self.record = xmltodict.parse(self.json['record'])['record']
+        self.metadata = self.record['metadata']
+        self._dc = self.metadata['oai_dc:dc']
 
+    def dc(self, val):
+        return self._dc[f'dc:{val}']
+        
+    def __getattr__(self, key):
+        if 'dc:' + key in self._dc:
+            return self._dc['dc:'+key]
+        if key in self.json:
+            return self.json[key]
+        raise AttributeError
+        
+    def __dir__(self):
+        d = ['metadata', 'record', 'json', 'dc']
+        d += [e.removeprefix('dc:') for e in self._dc.keys() if e.startswith('dc:')]
+        d += [e for e in self.json]
+        return d
+
+################################################################
 class EpiscienceDB:
 
     status_codes = {
@@ -156,7 +179,8 @@ class EpiscienceDB:
 
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
-        return r
+        
+        return EpiSciencesPaper(r)
 
 ################################################################
 
