@@ -10,6 +10,7 @@ import os
 class HttpErrorCode(Exception):
     def __init__(self, code, msg):
         self.code = code
+        self.msg = msg
 
 ################################################################
 
@@ -45,7 +46,7 @@ class EpiscienceDB:
         r = r.json()
         if 'code' in r:
             if r['code'] == 401:
-                raise HttpErrorCode(401)
+                raise HttpErrorCode(401, 'Error code 401 was returned')
         self.token = r
 
     def refresh_token(self):
@@ -95,7 +96,7 @@ class EpiscienceDB:
                     "Incorrect login when fetching the token:", e.code)
         if self.token is None:
             raise RuntimeError("Error with the token")
-        print('token:', self.token['token'][:12], '...')
+        # print('token:', self.token['token'][:12], '...')
 
     def check_authentication(self):
         try:
@@ -115,7 +116,7 @@ class EpiscienceDB:
             args.append(f'{k}={v}')
         if args:
             url += '?'+'&'.join(args)
-        print(url)
+        # print(url)
         headers = {
             "accept": "application/ld+json",
             "Authorization": f"Bearer {self.token['token']}"
@@ -160,47 +161,3 @@ class EpiscienceDB:
 ################################################################
 
 
-if __name__ == '__main__':
-    import streamlit as st
-    st.set_page_config(layout="wide")
-    conn = EpiscienceDB()
-
-    if not os.path.exists('papers.json'):
-        papers = conn.list_papers()
-        print(f'Fetched {len(papers)} papers')
-        with open('papers.json', 'w') as f:
-            f.write(json.dumps(papers))
-    else:
-        with open('papers.json') as f:
-            papers = json.load(f)
-
-    sel = st.selectbox("Choose paper", options=[p['docid'] for p in papers])
-    p = conn.get_paper(sel)
-    st.markdown(p['record'], unsafe_allow_html=True)
-    for k, v in p.items():
-        st.write(f'{k}: {v}')
-
-#     for p in papers:
-#         with st.expander(p['@id']):
-#             for k in p.keys():
-#                 st.write(f'{k}: {p[k]}')
-
-#     return
-#     print('*'*60)
-#     print("Fetch users")
-#     print('*'*60)
-#
-#     users = conn.list_users()
-#     print(f'Found {len(users)} users')
-#     for p in users:
-#         print('\n' + '*'*60 + '\n')
-#         for k, v in p.items():
-#             print(k, v)
-#
-u = conn.get_paper(12489)
-with open('paper.json', 'w') as f:
-    f.write(json.dumps(u))
-
-st.write(u)
-for k, v in u.items():
-    st.write(f'{k}: {v}')
