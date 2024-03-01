@@ -7,9 +7,10 @@ import episcience_api as epi
 
 st.set_page_config(layout="wide")
 cookie_manager = stx.CookieManager()
+
 cookies = cookie_manager.get_all()
 should_not_update_cookie = False
-if not (cookies):
+if not cookies:
     should_not_update_cookie = True
 
 ################################################################
@@ -19,24 +20,33 @@ class STEpisciencesDB(epi.EpisciencesDB):
         super().__init__(*args, **kwargs)
         
     def fetch_token(self, username=None, password=None):
-        username = st.text_input('Username', value=username)
-        password = st.text_input('API Password', value=password, type='password')
-        button = st.button('connect')
-        if not button:
-            return
-        if (username == '' or password == '' or 
-            username is None or password is None):
-            st.error("Wrong credentials")
-            return
+        st.markdown('# Episciences papers explorator')
+        box = st.empty()
+        with box.form("Episcience API authentication"):
+            username = st.text_input('Username', value=username)
+            password = st.text_input('API Password', value=password, type='password')
+            button = st.form_submit_button('connect')
+            if not button:
+                return
+            if (username == '' or password == '' or 
+                username is None or password is None):
+                st.error("Wrong credentials")
+                return
+
+            try:
+                super().fetch_token(username, password)
+            except epi.HttpErrorCode as e:
+                st.error("Wrong credentials")
+                raise e
+            if not should_not_update_cookie:
+                cookie_manager.set('episciences_api_token', self.token)
+                box.empty()
         
-        super().fetch_token(username, password)
-        if not should_not_update_cookie:
-            cookie_manager.set('episciences_api_token', self.token)
-
     def read_token_from_file(self):
-        if 'episciences_api_token' in cookies:
-            self.token = cookie_manager.get('episciences_api_token')
-
+        if 'episciences_api_token' in cookies and 'token' in cookies['episciences_api_token']:
+            self.token = cookies['episciences_api_token']
+        
+        
     def write_token_to_file(self):
         pass
         
@@ -78,6 +88,10 @@ def print_page(conn):
 
 try:
     conn = STEpisciencesDB()
+    lout = st.button('logout')
+    if lout:
+        cookie_manager.set('episciences_api_token', {})
+        
     print_page(conn)
 except RuntimeError as e:
     pass
