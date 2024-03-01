@@ -127,7 +127,7 @@ class EpiscienceDB:
             if code == 500:
                 continue
             if code != 200:
-                raise HttpErrorCode(code, str(r))
+                raise HttpErrorCode(code, f'Failed to perform request: {req}')
             r = r.json()
             if 'hydra:member' in r:
                 print('hydra:totalItems: ', r['hydra:totalItems'])
@@ -197,7 +197,10 @@ if __name__ == '__main__':
 #         for k, v in p.items():
 #             print(k, v)
 #
-#     u = conn.get_paper(11497)
-#     print(u)
-#     for k, v in u.items():
-#         print(k, v)
+u = conn.get_paper(12489)
+with open('paper.json', 'w') as f:
+    f.write(json.dumps(u))
+
+st.write(u)
+for k, v in u.items():
+    st.write(f'{k}: {v}')
