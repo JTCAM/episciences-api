@@ -41,7 +41,8 @@ class EpiSciencesPaper:
 class EpisciencesDB:
 
     status_codes = {
-        19, 'Copy editing',
+        19: 'Copy editing',
+        16: 'Published',
     }
 
     # rvid = 23 => JTCAM
