@@ -20,31 +20,24 @@ else:
 
 sel = st.selectbox("Choose paper", options=[p['docid'] for p in papers])
 p = conn.get_paper(sel)
-st.markdown(p['record'], unsafe_allow_html=True)
-for k, v in p.items():
-    st.write(f'{k}: {v}')
 
-#     for p in papers:
-#         with st.expander(p['@id']):
-#             for k in p.keys():
-#                 st.write(f'{k}: {p[k]}')
-
-#     return
-#     print('*'*60)
-#     print("Fetch users")
-#     print('*'*60)
-#
-#     users = conn.list_users()
-#     print(f'Found {len(users)} users')
-#     for p in users:
-#         print('\n' + '*'*60 + '\n')
-#         for k, v in p.items():
-#             print(k, v)
-#
-u = conn.get_paper(12489)
-with open('paper.json', 'w') as f:
-    f.write(json.dumps(u))
-
-st.write(u)
-for k, v in u.items():
-    st.write(f'{k}: {v}')
+if not isinstance(p.title, str):
+    p.title = p.title['#text']
+st.markdown("## " + p.title)
+if isinstance(p.creator, str):
+    p.creator = [p.creator]
+st.markdown("### *" + '; '.join(p.creator) + "*")
+st.markdown('#### submissionDate: '+ p.submissionDate)
+if not isinstance(p.title, str):
+    p.title = p.title['#text']
+st.markdown(p.description.strip())   
+st.markdown('Identifiers:\n\n- ' + '\n - '.join(
+    [e.strip() for e in p.identifier if e.strip() != '']))
+st.markdown('Status:' + str(p.status))
+field = st.selectbox("Choose field", options=dir(p))
+field = getattr(p, field)
+if field is None:
+    field = "Empty or not found"
+st.write(field)
+with st.expander('Full Content'):
+    st.write(p.json)
