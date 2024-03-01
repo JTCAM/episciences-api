@@ -64,17 +64,35 @@ def print_page(conn):
     codes = epi.EpisciencesDB.status_codes.copy()
     codes[-1] = 'Unknown'
     sel_status = st.multiselect("Article status selection",
-                                 ['-1']+list(epi.EpisciencesDB.status_codes.keys()),
-                                 format_func=lambda i: codes[int(i)]
-                                 )
+                                ['-1']+list(epi.EpisciencesDB.status_codes.keys()),
+                                format_func=lambda i: codes[int(i)] + f'({i})',
+                                default=[19],
+                                )
     sel_status = [int(s) for s in sel_status]
-    st.write(sel_status)
-    st.write()
-    sel = st.selectbox("Choose paper",
-                       options=[
-                           p['docid'] for p in papers
-                           if (p['status'] in sel_status or
-                               (p['status'] not in epi.EpisciencesDB.status_codes and -1 in sel_status))])
+    # st.write(sel_status)
+
+    selectable_papers = [p['docid'] for p in papers
+                         if (p['status'] in sel_status or
+                             (p['status'] not in epi.EpisciencesDB.status_codes and -1 in sel_status)
+                             )]
+
+    summary_papers = []
+    for p in selectable_papers:
+        p = conn.get_paper(p)
+        summary_papers.append((
+            p.title['#text'],
+            p.creator,
+            p.submissionDate,
+            epi.EpisciencesDB.status_codes[p.status],
+            dir(p),
+        ))
+
+    import pandas as pd
+    summary_papers = pd.DataFrame(summary_papers, columns=[
+        'title', 'authors', 'submissiondate', 'status', 'features'])
+    st.dataframe(summary_papers, use_container_width=True)
+    
+    sel = st.selectbox("Choose paper",options=selectable_papers)
     if sel is None:
         st.warning('No paper selected')
         return
