@@ -48,7 +48,8 @@ class EpisciencesDB:
         0: 'Submitted',
         2: 'In review',
         7: 'Pending minor revision',
-        15: 'Pending major revision'
+        15: 'Pending major revision',
+        12: 'Reviewed'
     }
 
     # rvid = 23 => JTCAM
