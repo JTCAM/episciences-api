@@ -38,11 +38,10 @@ class EpiSciencesPaper:
         return d
 
 ################################################################
-class EpiscienceDB:
+class EpisciencesDB:
 
     status_codes = {
-        'Copy editing': 19,
-
+        19, 'Copy editing',
     }
 
     # rvid = 23 => JTCAM
@@ -51,9 +50,11 @@ class EpiscienceDB:
         self.authenticate()
         self.rvid = rvid
 
-    def fetch_token(self):
-        username = input('login:')
-        password = getpass.getpass()
+    def fetch_token(self, username=None, password=None):
+        if username is None:
+            username = input('login:')
+        if password is None:
+            password = getpass.getpass()
         url = 'https://api.episciences.org'
         r = requests.post(
             url+'/api/login',
@@ -73,6 +74,8 @@ class EpiscienceDB:
         self.token = r
 
     def refresh_token(self):
+        if self.token is None:
+            return 
         url = 'https://api.episciences.org'
         r = requests.post(
             url+'/api/token/refresh',
@@ -122,6 +125,8 @@ class EpiscienceDB:
         # print('token:', self.token['token'][:12], '...')
 
     def check_authentication(self):
+        if self.token is None:
+            return False
         try:
             r = self.epi_get('/api/me')
         except HttpErrorCode as e:
