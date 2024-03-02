@@ -1,1 +1,1 @@
-from episciences_api import *
+from .episciences_api import *

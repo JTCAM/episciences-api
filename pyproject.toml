@@ -19,4 +19,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-epi = "episciences.scripts.episciences_req:main_PYTHON_ARGCOMPLETE_OK"
+epi = "episciences.scripts.episciences_req:main"
