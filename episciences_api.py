@@ -13,6 +13,8 @@ class HttpErrorCode(Exception):
         self.msg = msg
 
 ################################################################
+
+
 class EpiSciencesPaper:
 
     def __init__(self, json):
@@ -23,21 +25,24 @@ class EpiSciencesPaper:
 
     def dc(self, val):
         return self._dc[f'dc:{val}']
-        
+
     def __getattr__(self, key):
         if 'dc:' + key in self._dc:
             return self._dc['dc:'+key]
         if key in self.json:
             return self.json[key]
         raise AttributeError
-        
+
     def __dir__(self):
         d = ['metadata', 'record', 'json', 'dc']
-        d += [e.removeprefix('dc:') for e in self._dc.keys() if e.startswith('dc:')]
+        d += [e.removeprefix('dc:')
+              for e in self._dc.keys() if e.startswith('dc:')]
         d += [e for e in self.json]
         return d
 
 ################################################################
+
+
 class EpisciencesDB:
 
     status_codes = {
@@ -83,7 +88,7 @@ class EpisciencesDB:
 
     def refresh_token(self):
         if self.token is None:
-            return 
+            return
         url = 'https://api.episciences.org'
         r = requests.post(
             url+'/api/token/refresh',
@@ -106,6 +111,8 @@ class EpisciencesDB:
     def authenticate(self):
         if os.path.exists('token.json'):
             try:
+                import streamlit as st
+                st.write(f'pass here {__line__}')
                 self.read_token_from_file()
                 if not self.check_authentication():
                     self.token = None
@@ -122,6 +129,8 @@ class EpisciencesDB:
                 print("error during authentication:", e.code)
                 pass
         if self.token is None:
+            import streamlit as st
+            st.write(f'pass here {__line__}')
             try:
                 self.fetch_token()
                 self.write_token_to_file()
@@ -129,7 +138,7 @@ class EpisciencesDB:
                 raise RuntimeError(
                     "Incorrect login when fetching the token:", e.code)
         if self.token is None:
-            raise RuntimeError("Error with the token")
+            raise RuntimeError("Error with the token (None)")
         # print('token:', self.token['token'][:12], '...')
 
     def check_authentication(self):
@@ -194,9 +203,7 @@ class EpisciencesDB:
 
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
-        
+
         return EpiSciencesPaper(r)
 
 ################################################################
-
-
