@@ -45,7 +45,6 @@ class STEpisciencesDB(epi.EpisciencesDB):
                 cookie_manager.set('episciences_api_token', self.token)
 
     def read_token_from_file(self):
-        st.write('pass here')
         if 'episciences_api_token' in cookies and 'token' in cookies['episciences_api_token']:
             self.token = cookies['episciences_api_token']
 
