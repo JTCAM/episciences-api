@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "episciences-api"
+version = "0.1.0"
+description = "Python module to use the episciences api and manipulate papers and users"
+authors = ["Guillaume Anciaux <guillaume.anciaux@epfl.ch>"]
+license = "GPL"
+readme = "README.md"
+packages = [{include = "episciences_api"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+extra-streamlit-components = "^0.1.70"
+streamlit = "^1.31.1"
+xmltodict = "^0.13.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
