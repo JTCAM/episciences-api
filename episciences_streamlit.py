@@ -65,9 +65,7 @@ def print_page(conn):
             papers = json.load(f)
 
     codes = epi.EpisciencesDB.status_codes.copy()
-    codes[-1] = 'Unknown'
     sel_status = st.multiselect("Article status selection",
-                                ['-1'] +
                                 list(epi.EpisciencesDB.status_codes.keys()),
                                 format_func=lambda i: codes[int(i)] + f'({i})',
                                 default=[19],
@@ -83,11 +81,15 @@ def print_page(conn):
     summary_papers = []
     for p in selectable_papers:
         p = conn.get_paper(p)
+        status = 'Unknwon'
+        if p.status in epi.EpisciencesDB.status_codes:
+            status = epi.EpisciencesDB.status_codes[p.status],
+
         summary_papers.append((
             p.title['#text'],
             p.creator,
             p.submissionDate,
-            epi.EpisciencesDB.status_codes[p.status],
+            status,
             dir(p),
         ))
 

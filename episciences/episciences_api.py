@@ -46,6 +46,7 @@ class EpiSciencesPaper:
 class EpisciencesDB:
 
     status_codes = {
+        -1: 'Unknown',
         19: 'Copy editing',
         16: 'Published2',
         6: 'Published',
