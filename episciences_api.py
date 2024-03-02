@@ -109,25 +109,24 @@ class EpisciencesDB:
             f.write(json.dumps(self.token))
 
     def authenticate(self):
-        if os.path.exists('token.json'):
-            try:
-                import streamlit as st
-                st.write('pass here 1')
+        try:
+            import streamlit as st
+            st.write('pass here 1')
+            self.read_token_from_file()
+            if not self.check_authentication():
+                self.token = None
+            if self.token is None:
                 self.read_token_from_file()
-                if not self.check_authentication():
-                    self.token = None
-                if self.token is None:
-                    self.read_token_from_file()
-                    self.refresh_token()
-                    print('Refreshed token')
-                    self.write_token_to_file()
-                if not self.check_authentication():
-                    self.token = None
-            except json.JSONDecodeError:
-                pass
-            except HttpErrorCode as e:
-                print("error during authentication:", e.code)
-                pass
+                self.refresh_token()
+                print('Refreshed token')
+                self.write_token_to_file()
+            if not self.check_authentication():
+                self.token = None
+        except json.JSONDecodeError:
+            pass
+        except HttpErrorCode as e:
+            print("error during authentication:", e.code)
+            pass
         if self.token is None:
             import streamlit as st
             st.write('pass here 2')
