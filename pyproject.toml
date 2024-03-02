@@ -5,7 +5,7 @@ description = "Python module to use the episciences api and manipulate papers an
 authors = ["Guillaume Anciaux <guillaume.anciaux@epfl.ch>"]
 license = "GPL"
 readme = "README.md"
-packages = [{include = "episciences_api"}]
+packages = [{include = "episciences"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
