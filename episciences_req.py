@@ -1,6 +1,6 @@
 #!/bin/env python
 import json
-import episcience_api as epi
+import episciences_api as epi
 import argparse
 ################################################################
 
