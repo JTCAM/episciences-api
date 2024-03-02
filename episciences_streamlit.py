@@ -137,6 +137,11 @@ def print_page(conn):
         field = "Empty or not found"
     st.write(field)
     with st.expander('Full Content'):
+        st.write('Info from request /api/papers')
+        for _p in papers:
+            if _p['docid'] == p.docid:
+                st.write(_p)
+        st.write(f'Info from request /api/papers/{sel}')
         st.write(p.json)
 
 
