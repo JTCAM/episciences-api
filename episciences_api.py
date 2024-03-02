@@ -112,7 +112,7 @@ class EpisciencesDB:
         if os.path.exists('token.json'):
             try:
                 import streamlit as st
-                st.write(f'pass here {__line__}')
+                st.write('pass here 1')
                 self.read_token_from_file()
                 if not self.check_authentication():
                     self.token = None
@@ -130,7 +130,7 @@ class EpisciencesDB:
                 pass
         if self.token is None:
             import streamlit as st
-            st.write(f'pass here {__line__}')
+            st.write('pass here 2')
             try:
                 self.fetch_token()
                 self.write_token_to_file()
