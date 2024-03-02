@@ -13,22 +13,25 @@ auth_box = st.container()
 cookie_manager = None
 cookie_manager = stx.CookieManager()
 cookies = cookie_manager.get_all()
-# st.write(cookies)
-    
+st.write(cookies)
+
 ################################################################
+
+
 class STEpisciencesDB(epi.EpisciencesDB):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
     def fetch_token(self, username=None, password=None):
         with auth_box.form("Episcience API authentication"):
             username = st.text_input('Username', value=username)
-            password = st.text_input('API Password', value=password, type='password')
+            password = st.text_input(
+                'API Password', value=password, type='password')
             button = st.form_submit_button('connect')
             if button:
-                if (username == '' or password == '' or 
-                    username is None or password is None):
+                if (username == '' or password == '' or
+                        username is None or password is None):
                     st.error("Wrong credentials")
                     return
 
@@ -40,16 +43,16 @@ class STEpisciencesDB(epi.EpisciencesDB):
                 # st.write('pas here')
                 # st.write(self.token)
                 cookie_manager.set('episciences_api_token', self.token)
-        
+
     def read_token_from_file(self):
         if 'episciences_api_token' in cookies and 'token' in cookies['episciences_api_token']:
             self.token = cookies['episciences_api_token']
-        
-        
+
     def write_token_to_file(self):
         pass
-        
+
 ################################################################
+
 
 def print_page(conn):
     if not os.path.exists('papers.json'):
@@ -64,7 +67,8 @@ def print_page(conn):
     codes = epi.EpisciencesDB.status_codes.copy()
     codes[-1] = 'Unknown'
     sel_status = st.multiselect("Article status selection",
-                                ['-1']+list(epi.EpisciencesDB.status_codes.keys()),
+                                ['-1'] +
+                                list(epi.EpisciencesDB.status_codes.keys()),
                                 format_func=lambda i: codes[int(i)] + f'({i})',
                                 default=[19],
                                 )
@@ -91,8 +95,8 @@ def print_page(conn):
     summary_papers = pd.DataFrame(summary_papers, columns=[
         'title', 'authors', 'submissiondate', 'status', 'features'])
     st.dataframe(summary_papers, use_container_width=True)
-    
-    sel = st.selectbox("Choose paper",options=selectable_papers)
+
+    sel = st.selectbox("Choose paper", options=selectable_papers)
     if sel is None:
         st.warning('No paper selected')
         return
@@ -100,14 +104,14 @@ def print_page(conn):
 
     if not isinstance(p.title, str):
         if isinstance(p.title, list):
-            p.title = p.title[0]   
+            p.title = p.title[0]
         p.title = p.title['#text']
     p.title = p.title.replace('\n', ' ')
     st.markdown("## " + p.title)
     if isinstance(p.creator, str):
         p.creator = [p.creator]
     st.markdown("### *" + '; '.join(p.creator) + "*")
-    st.markdown('#### submissionDate: '+ p.submissionDate)
+    st.markdown('#### submissionDate: ' + p.submissionDate)
 
     if hasattr(p, 'description'):
         if not isinstance(p.description, str):
@@ -139,15 +143,15 @@ def print_page(conn):
 try:
     conn = STEpisciencesDB()
     # auth_box.empty()
+
     def reset():
         cookie_manager.set('episciences_api_token', {})
         os.remove('papers.json')
-        
+
     with main_box:
-        lout = st.button('logout and refresh', on_click=reset) 
+        lout = st.button('logout and refresh', on_click=reset)
         # st.write(cookies)
         print_page(conn)
 except RuntimeError as e:
     st.error(e)
     pass
-
