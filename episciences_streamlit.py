@@ -145,11 +145,15 @@ try:
     # auth_box.empty()
 
     def reset():
+        st.write('logging out')
         cookie_manager.set('episciences_api_token', {})
         os.remove('papers.json')
+        st.experimental_rerun()
 
     with main_box:
-        lout = st.button('logout and refresh', on_click=reset)
+        lout = st.button('logout and refresh')
+        if lout:
+            reset()
         # st.write(cookies)
         print_page(conn)
 except RuntimeError as e:
