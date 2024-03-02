@@ -3,7 +3,7 @@ import json
 import os
 import streamlit as st
 import extra_streamlit_components as stx
-import episciences_api as epi
+import episciences as epi
 
 st.set_page_config(layout="wide")
 st.markdown('# Episciences papers explorator')
