@@ -13,7 +13,7 @@ auth_box = st.container()
 cookie_manager = None
 cookie_manager = stx.CookieManager()
 cookies = cookie_manager.get_all()
-st.write(cookies)
+# st.write(cookies)
 
 ################################################################
 
