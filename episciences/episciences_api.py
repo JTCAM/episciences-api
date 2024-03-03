@@ -49,7 +49,7 @@ class EpisciencesDB:
         -1: 'Unknown',
         19: 'Copy editing',
         16: 'Published',
-        6: 'All (Unknown tag actually)',
+        6: 'All -- Unknown tag actually',
         5: 'Refused',
         0: 'Submitted',
         2: 'In review',
