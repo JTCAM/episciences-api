@@ -29,4 +29,7 @@ you can launch with streamlit
 streamlit run episciences_streamlit.py
 ```
 
+The service is also visible online at https://jtcam-copyediting.streamlit.app
+
+
 
