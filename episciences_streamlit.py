@@ -5,8 +5,12 @@ import streamlit as st
 import extra_streamlit_components as stx
 import episciences as epi
 
-st.set_page_config(layout="wide")
-st.markdown('# Episciences papers explorator')
+st.set_page_config(
+    layout="wide", page_icon='https://jtcam.episciences.org/favicon-32x32.png?v=20211124')
+st.markdown('<center><img style="width: 60%;" src="https://jtcam.episciences.org/public/BandeauWebv_3.svg" alt="JTCAM_header"></center>',
+            unsafe_allow_html=True)
+st.markdown('<h1> <center> Episciences papers explorator </center></h1> <hr>',
+            unsafe_allow_html=True)
 main_box = st.container()
 auth_box = st.container()
 
@@ -14,7 +18,6 @@ cookie_manager = None
 cookie_manager = stx.CookieManager()
 cookies = cookie_manager.get_all()
 # st.write(cookies)
-
 ################################################################
 
 
