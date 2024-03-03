@@ -159,7 +159,7 @@ def print_page(conn):
                 p.description = p.description[0]
             if not isinstance(p.description, str):
                 p.description = p.description['#text']
-        st.markdown(f'<div style="text-align: justify"> {p.description.strip()} </div>',
+        st.markdown(f'<div style="text-align: justify"> {p.description.strip()} </div><br>',
                     unsafe_allow_html=True
                     )
     if not isinstance(p.identifier, str):
