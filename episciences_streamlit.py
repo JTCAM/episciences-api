@@ -128,6 +128,7 @@ def print_page(conn):
             if isinstance(p.creator, str):
                 p.creator = [p.creator]
             summary_papers.append((
+                str(p.docid),
                 p.title,
                 p.creator,
                 p.submissionDate,
@@ -137,9 +138,11 @@ def print_page(conn):
 
     # st.write(summary_papers)
     import pandas as pd
-    summary_papers = pd.DataFrame(summary_papers, columns=[
-        'title', 'authors', 'submissiondate', 'status', 'features'])
-    st.dataframe(summary_papers, use_container_width=True)
+    summary_papers = pd.DataFrame(
+        summary_papers,
+        columns=['docid',
+                 'title', 'authors', 'submissiondate', 'status', 'features'])
+    st.dataframe(summary_papers, use_container_width=True, hide_index=True)
 
     sel = st.selectbox("Choose paper", options=selectable_papers)
     if sel is None:
