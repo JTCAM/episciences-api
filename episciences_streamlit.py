@@ -119,18 +119,18 @@ def print_page(conn):
         if p.status in epi.EpisciencesDB.status_codes:
             status = epi.EpisciencesDB.status_codes[p.status],
 
-    if not isinstance(p.title, str):
-        if isinstance(p.title, list):
-            p.title = p.title[0]
-        p.title = p.title['#text']
-    p.title = p.title.replace('\n', ' ')
-    summary_papers.append((
-        p.title,
-        p.creator,
-        p.submissionDate,
-        status,
-        dir(p),
-    ))
+        if not isinstance(p.title, str):
+            if isinstance(p.title, list):
+                p.title = p.title[0]
+            p.title = p.title['#text']
+        p.title = p.title.replace('\n', ' ')
+        summary_papers.append((
+            p.title,
+            p.creator,
+            p.submissionDate,
+            status,
+            dir(p),
+        ))
 
     import pandas as pd
     summary_papers = pd.DataFrame(summary_papers, columns=[
