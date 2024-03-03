@@ -54,6 +54,37 @@ class STEpisciencesDB(epi.EpisciencesDB):
 ################################################################
 
 
+def format_authors(authors, affiliations):
+    orcid_img = '<img height="15" src="https://zenodo.org/static/images/orcid.svg">'
+    _authors = []
+    _affiliations = []
+
+    for aff in affiliations:
+        aff = aff.split(";")
+        for e in aff:
+            if e.strip() not in _affiliations:
+                _affiliations.append(e.strip())
+
+    for auth, aff in zip(authors, affiliations):
+        text = ""
+        text += f'**{auth}**'
+        text += "$^{"
+        aff = aff
+        aff = aff.split(";")
+        aff = [_affiliations.index(e.strip()) + 1 for e in aff]
+        aff = [str(e) for e in aff]
+        text += f'{",".join(aff)}'
+        text += "}$"
+
+        _authors.append(text)
+    formatted = "**<h4><center> " + "; ".join(_authors) + " </center></h4>**\n"
+    for idx, aff in enumerate(_affiliations):
+        formatted += f"<center><sup>{idx+1}</sup> <i>{aff}</i></center>\n"
+    return formatted
+
+################################################################
+
+
 def print_page(conn):
     if not os.path.exists('papers.json'):
         papers = conn.list_papers()
@@ -109,10 +140,13 @@ def print_page(conn):
             p.title = p.title[0]
         p.title = p.title['#text']
     p.title = p.title.replace('\n', ' ')
-    st.markdown("## " + p.title)
+    st.markdown(
+        f"<h2> <center>{p.title} </center></h2>", unsafe_allow_html=True)
     if isinstance(p.creator, str):
         p.creator = [p.creator]
-    st.markdown("### *" + '; '.join(p.creator) + "*")
+    # st.markdown("### *" + '; '.join(p.creator) + "*")
+    fmt = format_authors(p.creator, p.contributor)
+    st.markdown(fmt, unsafe_allow_html=True)
     st.markdown('#### submissionDate: ' + p.submissionDate)
 
     if hasattr(p, 'description'):
