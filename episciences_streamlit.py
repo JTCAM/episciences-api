@@ -150,7 +150,7 @@ def print_page(conn):
     # st.markdown("### *" + '; '.join(p.creator) + "*")
     fmt = format_authors(p.creator, p.contributor)
     st.markdown(fmt, unsafe_allow_html=True)
-    st.markdown(f'<h5><center> submissionDate: {p.submissionDate} </center></h5>',
+    st.markdown(f'<br><h5><center> submissionDate: {p.submissionDate} </center></h5>',
                 unsafe_allow_html=True)
 
     if hasattr(p, 'description'):
