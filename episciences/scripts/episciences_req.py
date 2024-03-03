@@ -11,7 +11,7 @@ def main():
                         help="Provide the paper to extract information from")
     args = parser.parse_args()
 
-    conn = epi.EpiscienceDB()
+    conn = epi.EpisciencesDB()
     p = conn.get_paper(args.paper)
     with open('paper.json', 'w') as f:
         f.write(json.dumps(p.json))

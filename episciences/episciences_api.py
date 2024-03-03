@@ -102,8 +102,11 @@ class EpisciencesDB:
         self.token = r
 
     def read_token_from_file(self):
-        with open('token.json') as f:
-            self.token = json.load(f)
+        try:
+            with open('token.json') as f:
+                self.token = json.load(f)
+        except FileNotFoundError as e:
+            pass
 
     def write_token_to_file(self):
         with open('token.json', 'w') as f:
