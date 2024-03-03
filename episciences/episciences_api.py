@@ -48,8 +48,8 @@ class EpisciencesDB:
     status_codes = {
         -1: 'Unknown',
         19: 'Copy editing',
-        16: 'Published2',
-        6: 'Published',
+        16: 'Published',
+        6: 'All (Unknown tag actually)',
         5: 'Refused',
         0: 'Submitted',
         2: 'In review',
