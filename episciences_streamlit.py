@@ -58,7 +58,6 @@ class STEpisciencesDB(epi.EpisciencesDB):
 
 
 def format_authors(authors, affiliations):
-    orcid_img = '<img height="15" src="https://zenodo.org/static/images/orcid.svg">'
     _authors = []
     _affiliations = []
 
@@ -72,7 +71,6 @@ def format_authors(authors, affiliations):
         text = ""
         text += f'**{auth}**'
         text += "$^{"
-        aff = aff
         aff = aff.split(";")
         aff = [_affiliations.index(e.strip()) + 1 for e in aff]
         aff = [str(e) for e in aff]
@@ -86,7 +84,6 @@ def format_authors(authors, affiliations):
     return formatted
 
 ################################################################
-
 
 def print_page(conn):
     if not os.path.exists('papers.json'):
@@ -118,7 +115,7 @@ def print_page(conn):
             p = conn.get_paper(p)
             status = 'Unknwon'
             if p.status in epi.EpisciencesDB.status_codes:
-                status = epi.EpisciencesDB.status_codes[p.status],
+                status = epi.EpisciencesDB.status_codes[p.status]
 
             if not isinstance(p.title, str):
                 if isinstance(p.title, list):
@@ -165,6 +162,7 @@ def print_page(conn):
     if len(p.creator) > len(p.contributor):
         p.contributor += [p.contributor[-1]] * \
             (len(p.creator)-len(p.contributor))
+    
     fmt = format_authors(p.creator, p.contributor)
     st.markdown(fmt, unsafe_allow_html=True)
     st.markdown(f'<br><h5><center> submissionDate: {p.submissionDate} </center></h5>',
@@ -222,4 +220,4 @@ try:
         print_page(conn)
 except RuntimeError as e:
     st.error(e)
-    pass
+
