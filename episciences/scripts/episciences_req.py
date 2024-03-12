@@ -16,12 +16,12 @@ def main():
     with open('paper.json', 'w') as f:
         f.write(json.dumps(p.json))
 
-    print('Title:', p.title['#text'])
+    print('Title:', p.title)
     print('Authors:', '; '.join(p.creator))
     print('Status:', p.status)
     print('submissionDate:', p.submissionDate)
     print('Date:', p.date)
-    print('Description:', p.description['#text'])
+    print('Description:', p.description)
     print('Identifiers:', ', '.join(p.identifier))
     print('Available_fields:', dir(p))
     json_formatted_str = json.dumps(p.json, indent=2)

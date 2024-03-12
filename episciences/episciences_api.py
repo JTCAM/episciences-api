@@ -22,6 +22,33 @@ class EpiSciencesPaper:
         self.record = xmltodict.parse(self.json['record'])['record']
         self.metadata = self.record['metadata']
         self._dc = self.metadata['oai_dc:dc']
+        self.normalize_entries()
+
+    def normalize_entries(self):
+        if not isinstance(self.title, str):
+            if isinstance(self.title, list):
+                self.title = self.title[0]
+            self.title = self.title['#text']
+        self.title = self.title.replace('\n', ' ')
+
+        if hasattr(self, 'description'):
+            if not isinstance(self.description, str):
+                if isinstance(self.description, list):
+                    self.description = self.description[0]
+                if not isinstance(self.description, str):
+                    self.description = self.description['#text']
+
+        if isinstance(self.creator, str):
+            self.creator = [self.creator]
+        if isinstance(self.identifier, str):
+            self.identifier = [self.identifier]
+
+        if hasattr(self, 'contributor'):
+            if isinstance(self.contributor, str):
+                self.contributor = [self.contributor]
+            if len(self.creator) > len(self.contributor):
+                self.contributor += [self.contributor[-1]] * \
+                    (len(self.creator)-len(self.contributor))
 
     def dc(self, val):
         return self._dc[f'dc:{val}']
@@ -202,7 +229,6 @@ class EpisciencesDB:
 
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
-
         return EpiSciencesPaper(r)
 
 ################################################################

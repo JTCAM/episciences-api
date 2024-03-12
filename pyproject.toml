@@ -20,3 +20,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 epi = "episciences.scripts.episciences_req:main"
+epi-dataset = "episciences.scripts.create_data_repo:main"

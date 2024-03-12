@@ -5,37 +5,38 @@ import subprocess
 import os
 import argparse
 ################################################################
+
+
 def fetch_info(args):
     conn = epi.EpisciencesDB()
     p = conn.get_paper(args.paper)
-    print('Title:', p.title['#text'])
+    print('Title:', p.title)
     print('Authors:', '; '.join(p.creator))
     print('Status:', p.status)
     print('submissionDate:', p.submissionDate)
     print('Date:', p.date)
-    print('Description:', p.description['#text'])
+    print('Description:', p.description)
     print('Identifiers:', ', '.join(p.identifier))
     print('Subject:', str(p.subject))
     print('Available_fields:', dir(p))
     return p
-    
+
 ################################################################
+
+
 def create_repo(p, args):
     os.mkdir(args.loc)
-    subprocess.call('renku init -s https://gitlab.com/dcsm/renku-templates -t jtcam', shell=True, cwd=args.loc)
+    subprocess.call(
+        'renku init -s https://gitlab.com/dcsm/renku-templates -t jtcam', shell=True, cwd=args.loc)
     return p
 
 ################################################################
+
 
 def set_study_metadata(p, args):
     cwd = os.getcwd()
     os.chdir(args.loc)
     zenodo_metadata = sp.utils.get_study_metadata()
-    if not isinstance(p.title, str):
-        if isinstance(p.title, list):
-            p.title = p.title[0]
-        p.title = p.title['#text']
-    p.title = p.title.replace('\n', ' ')
     zenodo_metadata['title'] = p.title
     zenodo_metadata['related_identifiers'] = []
     for _id in p.identifier:
@@ -46,23 +47,24 @@ def set_study_metadata(p, args):
              }
         )
 
-    if isinstance(p.creator, str):
-        p.creator = [p.creator]
     # st.markdown("### *" + '; '.join(p.creator) + "*")
-    if isinstance(p.contributor, str):
-        p.contributor = [p.contributor]
-    if len(p.creator) > len(p.contributor):
-        p.contributor += [p.contributor[-1]] * \
-            (len(p.creator)-len(p.contributor))
 
     zenodo_metadata['creators'] = []
-    for auth, aff in zip(p.creator, p.contributor):
-        zenodo_metadata['creators'].append(
-            {
-                'affiliation': aff,
-                'name': auth
-            }
-        )
+    if hasattr(p, 'contributor'):
+        for auth, aff in zip(p.creator, p.contributor):
+            zenodo_metadata['creators'].append(
+                {
+                    'affiliation': aff,
+                    'name': auth
+                }
+            )
+    else:
+        for auth in p.creator:
+            zenodo_metadata['creators'].append(
+                {
+                    'name': auth
+                }
+            )
 
     if hasattr(p, 'description'):
         if not isinstance(p.description, str):
@@ -70,14 +72,14 @@ def set_study_metadata(p, args):
                 p.description = p.description[0]
             if not isinstance(p.description, str):
                 p.description = p.description['#text']
-        
+
         zenodo_metadata['description'] += """
 Paper Description
 -----------------
 
 """ + p.description
 
-    zenodo_metadata['keywords'] = []    
+    zenodo_metadata['keywords'] = []
     for s in p.subject[1:]:
         if isinstance(s, dict):
             s = s['#text']
@@ -85,11 +87,11 @@ Paper Description
     for k, v in zenodo_metadata.items():
         print(f'{k}: {v}')
 
-
-    sp.utils.set_study_metadata(zenodo_metadata)               
+    sp.utils.set_study_metadata(zenodo_metadata)
     os.chdir(cwd)
 
 ################################################################
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -101,6 +103,7 @@ def main():
     paper = fetch_info(args)
     # create_repo(paper, args)
     set_study_metadata(paper, args)
-    
+
+
 if __name__ == "__main__":
     main()

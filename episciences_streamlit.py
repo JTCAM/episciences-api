@@ -85,6 +85,7 @@ def format_authors(authors, affiliations):
 
 ################################################################
 
+
 def print_page(conn):
     if not os.path.exists('papers.json'):
         papers = conn.list_papers()
@@ -117,13 +118,6 @@ def print_page(conn):
             if p.status in epi.EpisciencesDB.status_codes:
                 status = epi.EpisciencesDB.status_codes[p.status]
 
-            if not isinstance(p.title, str):
-                if isinstance(p.title, list):
-                    p.title = p.title[0]
-                p.title = p.title['#text']
-            p.title = p.title.replace('\n', ' ')
-            if isinstance(p.creator, str):
-                p.creator = [p.creator]
             summary_papers.append((
                 str(p.docid),
                 p.title,
@@ -147,41 +141,20 @@ def print_page(conn):
         return
     p = conn.get_paper(sel)
 
-    if not isinstance(p.title, str):
-        if isinstance(p.title, list):
-            p.title = p.title[0]
-        p.title = p.title['#text']
-    p.title = p.title.replace('\n', ' ')
     st.markdown(
         f"<h2> <center>{p.title} </center></h2>", unsafe_allow_html=True)
-    if isinstance(p.creator, str):
-        p.creator = [p.creator]
     # st.markdown("### *" + '; '.join(p.creator) + "*")
-    if isinstance(p.contributor, str):
-        p.contributor = [p.contributor]
-    if len(p.creator) > len(p.contributor):
-        p.contributor += [p.contributor[-1]] * \
-            (len(p.creator)-len(p.contributor))
-    
     fmt = format_authors(p.creator, p.contributor)
     st.markdown(fmt, unsafe_allow_html=True)
     st.markdown(f'<br><h5><center> submissionDate: {p.submissionDate} </center></h5>',
                 unsafe_allow_html=True)
 
     if hasattr(p, 'description'):
-        if not isinstance(p.description, str):
-            if isinstance(p.description, list):
-                p.description = p.description[0]
-            if not isinstance(p.description, str):
-                p.description = p.description['#text']
         st.markdown(f'<div style="text-align: justify"> {p.description.strip()} </div><br>',
                     unsafe_allow_html=True
                     )
-    if not isinstance(p.identifier, str):
-        p.identifier = '- ' + '\n - '.join(
-            [e.strip() for e in p.identifier if e.strip() != ''])
-    else:
-        p.identifier = '- ' + p.identifier
+    p.identifier = '- ' + '\n - '.join(
+        [e.strip() for e in p.identifier if e.strip() != ''])
     st.markdown('Identifiers:\n\n' + p.identifier)
     if p.status in epi.EpisciencesDB.status_codes:
         p.status = 'Status: ' + epi.EpisciencesDB.status_codes[p.status]
@@ -220,4 +193,3 @@ try:
         print_page(conn)
 except RuntimeError as e:
     st.error(e)
-
