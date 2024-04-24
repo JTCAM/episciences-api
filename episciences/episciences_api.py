@@ -194,6 +194,7 @@ class EpisciencesDB:
             "accept": "application/ld+json",
             "Authorization": f"Bearer {self.token['token']}"
         }
+        # print(headers)
         code = 500
         while 1:
             r = requests.get(url, headers=headers, timeout=1000)
@@ -212,7 +213,7 @@ class EpisciencesDB:
             return r
 
     def list_papers(self):
-        r = self.epi_get('/api/papers', rvid=self.rvid, pagination='false')
+        r = self.epi_get('/api/papers/', rvid=self.rvid, pagination='false')
         return r
 
     def list_users(self):
@@ -220,7 +221,7 @@ class EpisciencesDB:
             'userRoles.rvid': self.rvid,
             'pagination': 'false'
         }
-        r = self.epi_get('/api/users', **kwargs)
+        r = self.epi_get('/api/users/', **kwargs)
         return r
 
     def get_user(self, uid):

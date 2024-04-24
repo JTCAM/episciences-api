@@ -1,5 +1,6 @@
 #!/bin/env python
 import json
+import yaml
 import episciences as epi
 import argparse
 ################################################################
@@ -7,11 +8,16 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("paper", type=str,
+    parser.add_argument("--paper", default=None, type=str,
                         help="Provide the paper to extract information from")
     args = parser.parse_args()
 
     conn = epi.EpisciencesDB()
+    if not args.paper:
+        papers = conn.list_papers()
+        print(yaml.dump(papers))
+        print(f"Found {len(papers)} papers")
+        return
     p = conn.get_paper(args.paper)
     with open('paper.json', 'w') as f:
         f.write(json.dumps(p.json))
