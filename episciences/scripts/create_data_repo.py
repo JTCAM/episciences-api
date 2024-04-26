@@ -8,7 +8,7 @@ import argparse
 
 
 def fetch_info(args):
-    conn = epi.EpisciencesDB()
+    conn = epi.EpisciencesDB(token=args.token)
     p = conn.get_paper(args.paper)
     print('Title:', p.title)
     print('Authors:', '; '.join(p.creator))
@@ -97,6 +97,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("paper", type=str,
                         help="Provide the paper to extract information from")
+    parser.add_argument("--token", type=str,
+                        help="Provide the token to log to episcience api")
+
     args = parser.parse_args()
 
     args.loc = f'jtcam-data-{args.paper}'

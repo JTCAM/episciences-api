@@ -86,12 +86,14 @@ class EpisciencesDB:
     }
 
     # rvid = 23 => JTCAM
-    def __init__(self, rvid=23):
+    def __init__(self, rvid=23, token=None):
         self.token = None
+        self.provided_token = token
         self.authenticate()
         self.rvid = rvid
 
     def fetch_token(self, username=None, password=None):
+        
         if username is None:
             username = input('login:')
         if password is None:
@@ -129,6 +131,8 @@ class EpisciencesDB:
         self.token = r
 
     def read_token_from_file(self):
+        if self.provided_token is not None:
+            self.token = self.provided_token
         try:
             with open('token.json') as f:
                 self.token = json.load(f)
