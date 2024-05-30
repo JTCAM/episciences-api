@@ -13,12 +13,12 @@ def fetch_info(args):
     print('Title:', p.title)
     print('Authors:', '; '.join(p.creator))
     print('Status:', p.status)
-    print('submissionDate:', p.submissionDate)
-    print('Date:', p.date)
-    print('Description:', p.description)
-    print('Identifiers:', ', '.join(p.identifier))
-    print('Subject:', str(p.subject))
-    print('Available_fields:', dir(p))
+    # print('submissionDate:', p.submissionDate)
+    # print('Date:', p.date)
+    # print('Description:', p.description)
+    # print('Identifiers:', ', '.join(p.identifier))
+    # print('Subject:', str(p.subject))
+    # print('Available_fields:', dir(p))
     return p
 
 ################################################################
@@ -80,7 +80,12 @@ Paper Description
 """ + p.description
 
     zenodo_metadata['keywords'] = []
-    for s in p.subject[1:]:
+    subject = []
+    try:
+        subject = p.subject[1:]
+    except AttributeError:
+        pass
+    for s in subject:
         if isinstance(s, dict):
             s = s['#text']
         zenodo_metadata['keywords'].append(s)

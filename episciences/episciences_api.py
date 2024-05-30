@@ -4,6 +4,9 @@ import json
 import getpass
 import os
 import xmltodict
+import logging
+
+logger = logging.getLogger()
 ################################################################
 
 
@@ -132,7 +135,9 @@ class EpisciencesDB:
 
     def read_token_from_file(self):
         if self.provided_token is not None:
-            self.token = self.provided_token
+            self.token = {'token': self.provided_token}
+            # logger.error(f'received token: {self.token}')
+            return
         try:
             with open('token.json') as f:
                 self.token = json.load(f)
@@ -182,7 +187,7 @@ class EpisciencesDB:
             if e.code == 401:
                 print('Expired token')
                 return False
-        print('Logged:', r['email'])
+        # print('Logged:', r['email'])
         return True
 
     def epi_get(self, req, **kwargs):
@@ -193,7 +198,6 @@ class EpisciencesDB:
             args.append(f'{k}={v}')
         if args:
             url += '?'+'&'.join(args)
-        # print(url)
         headers = {
             "accept": "application/ld+json",
             "Authorization": f"Bearer {self.token['token']}"
