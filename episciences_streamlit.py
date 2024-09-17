@@ -61,7 +61,12 @@ def format_authors(authors, affiliations):
     _authors = []
     _affiliations = []
 
+    if affiliations is None:
+        affiliations = [None]*len(authors)
+
     for aff in affiliations:
+        if aff is None:
+            continue
         aff = aff.split(";")
         for e in aff:
             if e.strip() not in _affiliations:
@@ -70,12 +75,13 @@ def format_authors(authors, affiliations):
     for auth, aff in zip(authors, affiliations):
         text = ""
         text += f'**{auth}**'
-        text += "$^{"
-        aff = aff.split(";")
-        aff = [_affiliations.index(e.strip()) + 1 for e in aff]
-        aff = [str(e) for e in aff]
-        text += f'{",".join(aff)}'
-        text += "}$"
+        if aff is not None:
+            text += "$^{"
+            aff = aff.split(";")
+            aff = [_affiliations.index(e.strip()) + 1 for e in aff]
+            aff = [str(e) for e in aff]
+            text += f'{",".join(aff)}'
+            text += "}$"
 
         _authors.append(text)
     formatted = "**<h4><center> " + "; ".join(_authors) + " </center></h4>**\n"
@@ -144,7 +150,12 @@ def print_page(conn):
     st.markdown(
         f"<h2> <center>{p.title} </center></h2>", unsafe_allow_html=True)
     # st.markdown("### *" + '; '.join(p.creator) + "*")
-    fmt = format_authors(p.creator, p.contributor)
+    try:
+        contrib = p.contributor
+    except AttributeError:
+        contrib = None
+    fmt = format_authors(p.creator, contrib)
+
     st.markdown(fmt, unsafe_allow_html=True)
     st.markdown(f'<br><h5><center> submissionDate: {p.submissionDate} </center></h5>',
                 unsafe_allow_html=True)

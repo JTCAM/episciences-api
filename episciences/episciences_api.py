@@ -61,7 +61,7 @@ class EpiSciencesPaper:
             return self._dc['dc:'+key]
         if key in self.json:
             return self.json[key]
-        raise AttributeError
+        raise AttributeError(key)
 
     def __dir__(self):
         d = ['metadata', 'record', 'json', 'dc']
@@ -96,7 +96,7 @@ class EpisciencesDB:
         self.rvid = rvid
 
     def fetch_token(self, username=None, password=None):
-        
+
         if username is None:
             username = input('login:')
         if password is None:
