@@ -229,7 +229,7 @@ class EpisciencesDB:
             'userRoles.rvid': self.rvid,
             'pagination': 'false'
         }
-        r = self.epi_get('/api/users/', **kwargs)
+        r = self.epi_get('/api/users', **kwargs)
         return r
 
     def get_user(self, uid):
@@ -239,5 +239,6 @@ class EpisciencesDB:
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
         return EpiSciencesPaper(r)
+
 
 ################################################################
