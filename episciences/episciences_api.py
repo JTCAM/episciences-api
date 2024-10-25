@@ -220,7 +220,7 @@ class EpisciencesDB:
                 raise HttpErrorCode(code, f'Failed to perform request: {req}')
             r = r.json()
             if 'hydra:member' in r:
-                print('hydra:totalItems: ', r['hydra:totalItems'])
+                # print('hydra:totalItems: ', r['hydra:totalItems'])
                 # print(r['hydra:search'])
                 ret = r['hydra:member']
                 return ret
