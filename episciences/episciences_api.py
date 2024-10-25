@@ -3,6 +3,9 @@ import requests
 import json
 import getpass
 import xmltodict
+import logging
+
+logger = logging.getLogger()
 ################################################################
 
 
@@ -57,7 +60,7 @@ class EpiSciencesPaper:
             return self._dc['dc:'+key]
         if key in self.json:
             return self.json[key]
-        raise AttributeError
+        raise AttributeError(key)
 
     def __dir__(self):
         d = ['metadata', 'record', 'json', 'dc']
@@ -84,13 +87,23 @@ class EpisciencesDB:
         12: 'Reviewed'
     }
 
+    @staticmethod
+    def getStatusFromCode(code):
+        if code in EpisciencesDB.status_codes:
+            status = EpisciencesDB.status_codes[code]
+        else:
+            status = "Unknown"
+        return status
+
     # rvid = 23 => JTCAM
-    def __init__(self, rvid=23):
+    def __init__(self, rvid=23, token=None):
         self.token = None
+        self.provided_token = token
         self.authenticate()
         self.rvid = rvid
 
     def fetch_token(self, username=None, password=None):
+
         if username is None:
             username = input('login:')
         if password is None:
@@ -128,6 +141,10 @@ class EpisciencesDB:
         self.token = r
 
     def read_token_from_file(self):
+        if self.provided_token is not None:
+            self.token = {'token': self.provided_token}
+            # logger.error(f'received token: {self.token}')
+            return
         try:
             with open('token.json') as f:
                 self.token = json.load(f)
@@ -177,7 +194,7 @@ class EpisciencesDB:
             if e.code == 401:
                 print('Expired token')
                 return False
-        print('Logged:', r['email'])
+        # print('Logged:', r['email'])
         return True
 
     def epi_get(self, req, **kwargs):
@@ -188,11 +205,11 @@ class EpisciencesDB:
             args.append(f'{k}={v}')
         if args:
             url += '?'+'&'.join(args)
-        # print(url)
         headers = {
             "accept": "application/ld+json",
             "Authorization": f"Bearer {self.token['token']}"
         }
+        # print(headers)
         code = 500
         while 1:
             r = requests.get(url, headers=headers, timeout=1000)
@@ -211,7 +228,7 @@ class EpisciencesDB:
             return r
 
     def list_papers(self):
-        r = self.epi_get('/api/papers', rvid=self.rvid, pagination='false')
+        r = self.epi_get('/api/papers/', rvid=self.rvid, pagination='false')
         return r
 
     def list_users(self):
@@ -229,5 +246,6 @@ class EpisciencesDB:
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
         return EpiSciencesPaper(r)
+
 
 ################################################################

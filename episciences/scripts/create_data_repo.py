@@ -8,17 +8,17 @@ import argparse
 
 
 def fetch_info(args):
-    conn = epi.EpisciencesDB()
+    conn = epi.EpisciencesDB(token=args.token)
     p = conn.get_paper(args.paper)
     print('Title:', p.title)
     print('Authors:', '; '.join(p.creator))
     print('Status:', p.status)
-    print('submissionDate:', p.submissionDate)
-    print('Date:', p.date)
-    print('Description:', p.description)
-    print('Identifiers:', ', '.join(p.identifier))
-    print('Subject:', str(p.subject))
-    print('Available_fields:', dir(p))
+    # print('submissionDate:', p.submissionDate)
+    # print('Date:', p.date)
+    # print('Description:', p.description)
+    # print('Identifiers:', ', '.join(p.identifier))
+    # print('Subject:', str(p.subject))
+    # print('Available_fields:', dir(p))
     return p
 
 ################################################################
@@ -80,7 +80,12 @@ Paper Description
 """ + p.description
 
     zenodo_metadata['keywords'] = []
-    for s in p.subject[1:]:
+    subject = []
+    try:
+        subject = p.subject[1:]
+    except AttributeError:
+        pass
+    for s in subject:
         if isinstance(s, dict):
             s = s['#text']
         zenodo_metadata['keywords'].append(s)
@@ -97,6 +102,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("paper", type=str,
                         help="Provide the paper to extract information from")
+    parser.add_argument("--token", type=str,
+                        help="Provide the token to log to episcience api")
+
     args = parser.parse_args()
 
     args.loc = f'jtcam-data-{args.paper}'
