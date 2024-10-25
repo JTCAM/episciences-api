@@ -2,7 +2,6 @@
 import requests
 import json
 import getpass
-import os
 import xmltodict
 ################################################################
 
