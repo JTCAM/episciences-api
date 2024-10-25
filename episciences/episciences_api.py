@@ -88,6 +88,14 @@ class EpisciencesDB:
         12: 'Reviewed'
     }
 
+    @staticmethod
+    def getStatusFromCode(code):
+        if code in EpisciencesDB.status_codes:
+            status = EpisciencesDB.status_codes[code]
+        else:
+            status = "Unknown"
+        return status
+
     # rvid = 23 => JTCAM
     def __init__(self, rvid=23, token=None):
         self.token = None
