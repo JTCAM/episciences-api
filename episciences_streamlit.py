@@ -163,12 +163,13 @@ def print_page(conn):
     st.markdown(f'<br><h5><center> submissionDate: {p.submissionDate} </center></h5>',
                 unsafe_allow_html=True)
 
+    abstract = getattr(p, 'abstract', "No abstract")
     if hasattr(p, 'abstract'):
-        st.markdown(f'<div style="text-align: justify"> {p.abstract} </div><br>',
+        st.markdown(f'<div style="text-align: justify"> {abstract} </div><br>',
                     unsafe_allow_html=True
                     )
 
-    st.markdown(f'Files:\n\n {p.files.link}')
+    st.markdown(f'Files: {", ".join(p.files)}')
     st.markdown(f'Status: {p.status.label.en}')
     field = st.selectbox("Choose field", options=dir(p))
     field = getattr(p, field)

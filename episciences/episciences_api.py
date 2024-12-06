@@ -34,10 +34,8 @@ class EpiSciencesPaper:
         self.dates = self.document.database.current.dates
         self.status = self.document.database.current.status
         self.submissionDate = self.dates.first_submission_date
-        self.files = self.document.database.current.files
         print('*'*70)
         print(yaml.safe_dump(self.dates.toDict()))
-        self.normalize_entries()
 
     @property
     def abstract(self):
@@ -46,19 +44,12 @@ class EpiSciencesPaper:
             abstract = abstract[0]
         return abstract
 
-    def normalize_entries(self):
-        if not isinstance(self.title, str):
-            if isinstance(self.title, list):
-                self.title = self.title[0]
-            self.title = self.title['#text']
-        self.title = self.title.replace('\n', ' ')
-
-        if hasattr(self, 'description'):
-            if not isinstance(self.description, str):
-                if isinstance(self.description, list):
-                    self.description = self.description[0]
-                if not isinstance(self.description, str):
-                    self.description = self.description['#text']
+    @property
+    def files(self):
+        files = self.document.database.current.files
+        if not isinstance(files, list):
+            files = [files]
+        return [f.link for f in files]
 
     def __getattr__(self, key):
         if key in self.document:
