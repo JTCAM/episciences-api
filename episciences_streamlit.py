@@ -111,21 +111,21 @@ def print_page(conn):
     sel_status = [int(s) for s in sel_status]
     # st.write(sel_status)
 
-    selectable_papers = [p['docid'] for p in papers
+    selectable_papers = [p['paperid'] for p in papers
                          if (p['status'] in sel_status or
                              (p['status'] not in epi.EpisciencesDB.status_codes and -1 in sel_status)
                              )]
 
     summary_papers = []
     with st.spinner('Fetching data, please wait...'):
-        for p in selectable_papers:
-            p = conn.get_paper(p)
+        for paperid in selectable_papers:
+            p = conn.get_paper(paperid)
             status = 'Unknwon'
             if p.status in epi.EpisciencesDB.status_codes:
                 status = epi.EpisciencesDB.status_codes[p.status]
 
             summary_papers.append((
-                str(p.docid),
+                str(p.paperid),
                 p.title,
                 p.creator,
                 p.submissionDate,
@@ -137,11 +137,11 @@ def print_page(conn):
     import pandas as pd
     summary_papers = pd.DataFrame(
         summary_papers,
-        columns=['docid',
+        columns=['paperid',
                  'title', 'authors', 'submissiondate', 'status', 'features'])
     st.dataframe(summary_papers, use_container_width=True, hide_index=True)
 
-    sel = st.selectbox("Choose paper", options=selectable_papers)
+    sel = st.selectbox("Choose paper (id)", options=selectable_papers)
     if sel is None:
         st.warning('No paper selected')
         return
