@@ -241,7 +241,6 @@ class EpisciencesDB:
 
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
-        print('aaaa', uid)
         return EpiSciencesPaper(r)
 
 
