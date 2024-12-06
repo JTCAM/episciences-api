@@ -21,8 +21,8 @@ class HttpErrorCode(Exception):
 class EpiSciencesPaper:
 
     def __init__(self, json):
-        import yaml
-        print(yaml.safe_dump(json))
+        # import yaml
+        # print(yaml.safe_dump(json))
 
         self.json = DotMap(json)
         self.document = self.json.document
@@ -230,7 +230,6 @@ class EpisciencesDB:
 
     def list_users(self):
         kwargs = {
-            'userRoles.rvid': self.rvid,
             'pagination': 'false'
         }
         r = self.epi_get('/api/users', **kwargs)
