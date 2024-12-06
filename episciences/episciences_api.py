@@ -2,8 +2,8 @@
 import requests
 import json
 import getpass
-import xmltodict
 import logging
+from dotmap import DotMap
 
 logger = logging.getLogger()
 ################################################################
@@ -20,10 +20,23 @@ class HttpErrorCode(Exception):
 class EpiSciencesPaper:
 
     def __init__(self, json):
-        self.json = json
-        self.record = xmltodict.parse(self.json['record'])['record']
-        self.metadata = self.record['metadata']
-        self._dc = self.metadata['oai_dc:dc']
+        import yaml
+        print(yaml.safe_dump(json))
+
+        self.json = DotMap(json)
+        self.document = self.json.document
+        self.journal_document = self.document.journal
+        self.journal_article = self.journal_document.journal_article
+        self.titles = self.journal_article.titles
+        self.title = self.titles.title
+        self.contributors = self.journal_article['contributors']
+        self.abstract = self.journal_article.abstract.value
+        self.dates = self.document.database.current.dates
+        self.status = self.document.database.current.status
+        self.submissionDate = self.dates.first_submission_date
+        self.files = self.document.database.current.files
+        print('*'*70)
+        print(yaml.safe_dump(self.dates.toDict()))
         self.normalize_entries()
 
     def normalize_entries(self):
@@ -40,33 +53,16 @@ class EpiSciencesPaper:
                 if not isinstance(self.description, str):
                     self.description = self.description['#text']
 
-        if isinstance(self.creator, str):
-            self.creator = [self.creator]
-        if isinstance(self.identifier, str):
-            self.identifier = [self.identifier]
-
-        if hasattr(self, 'contributor'):
-            if isinstance(self.contributor, str):
-                self.contributor = [self.contributor]
-            if len(self.creator) > len(self.contributor):
-                self.contributor += [self.contributor[-1]] * \
-                    (len(self.creator)-len(self.contributor))
-
-    def dc(self, val):
-        return self._dc[f'dc:{val}']
-
     def __getattr__(self, key):
-        if 'dc:' + key in self._dc:
-            return self._dc['dc:'+key]
+        if key in self.document:
+            return self.document[key]
+
         if key in self.json:
             return self.json[key]
         raise AttributeError(key)
 
     def __dir__(self):
-        d = ['metadata', 'record', 'json', 'dc']
-        d += [e.removeprefix('dc:')
-              for e in self._dc.keys() if e.startswith('dc:')]
-        d += [e for e in self.json]
+        d = [e for e in self.json]
         return d
 
 ################################################################
@@ -78,7 +74,7 @@ class EpisciencesDB:
         -1: 'Unknown',
         19: 'Copy editing',
         16: 'Published',
-        6: 'All -- Unknown tag actually',
+        6: 'Obsolete',
         5: 'Refused',
         0: 'Submitted',
         2: 'In review',
@@ -245,6 +241,7 @@ class EpisciencesDB:
 
     def get_paper(self, uid):
         r = self.epi_get(f'/api/papers/{uid}')
+        print('aaaa', uid)
         return EpiSciencesPaper(r)
 
 
