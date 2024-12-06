@@ -35,7 +35,7 @@ class EpiSciencesPaper:
         self.status = self.document.database.current.status
         self.submissionDate = self.dates.first_submission_date
         print('*'*70)
-        print(yaml.safe_dump(self.dates.toDict()))
+        # print(yaml.safe_dump(self.dates.toDict()))
 
     @property
     def abstract(self):
