@@ -4,6 +4,7 @@ import json
 import getpass
 import logging
 from dotmap import DotMap
+import os
 
 logger = logging.getLogger()
 ################################################################
@@ -99,9 +100,12 @@ class EpisciencesDB:
         self.rvid = rvid
 
     def fetch_token(self, username=None, password=None):
-
+        if username is None and 'EPI_USERNAME' in os.environ:
+            username = os.environ['EPI_USERNAME']
         if username is None:
             username = input('login:')
+        if password is None and 'EPI_PASSWORD' in os.environ:
+            password = os.environ['EPI_PASSWORD']
         if password is None:
             password = getpass.getpass()
         url = 'https://api.episciences.org'
