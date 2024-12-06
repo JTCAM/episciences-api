@@ -57,29 +57,39 @@ class STEpisciencesDB(epi.EpisciencesDB):
 ################################################################
 
 
-def format_authors(authors, affiliations):
+def format_authors(authors):
     _authors = []
     _affiliations = []
 
-    if affiliations is None:
-        affiliations = [None]*len(authors)
+    def get_author_affiliations(author):
+        if 'affiliations' not in author:
+            return []
 
-    for aff in affiliations:
-        if aff is None:
-            continue
-        aff = aff.split(";")
-        for e in aff:
-            if e.strip() not in _affiliations:
-                _affiliations.append(e.strip())
+        affs = author.affiliations.institution
+        res = []
+        if not isinstance(affs, list):
+            affs = [affs]
 
-    for auth, aff in zip(authors, affiliations):
+        for e in affs:
+            name = e.institution_name
+            res.append(name)
+        return res
+
+    for author in authors.person_name:
+        affs = get_author_affiliations(author)
+
+        for e in affs:
+            if e not in _affiliations:
+                _affiliations.append(e)
+
+    for auth in authors.person_name:
         text = ""
-        text += f'**{auth}**'
-        if aff is not None:
+        text += f'**{auth.given_name} {auth.surname}**'
+        affs = get_author_affiliations(auth)
+        if affs:
             text += "$^{"
-            aff = aff.split(";")
-            aff = [_affiliations.index(e.strip()) + 1 for e in aff]
-            aff = [str(e) for e in aff]
+            affs = [_affiliations.index(e) + 1 for e in affs]
+            aff = [str(e) for e in affs]
             text += f'{",".join(aff)}'
             text += "}$"
 
@@ -111,23 +121,20 @@ def print_page(conn):
     sel_status = [int(s) for s in sel_status]
     # st.write(sel_status)
 
-    selectable_papers = [p['paperid'] for p in papers
-                         if (p['status'] in sel_status or
-                             (p['status'] not in epi.EpisciencesDB.status_codes and -1 in sel_status)
-                             )]
+    selectable_papers = [p['paperid']
+                         for p in papers if p['status'] in sel_status]
 
     summary_papers = []
     with st.spinner('Fetching data, please wait...'):
-        for paperid in selectable_papers:
-            p = conn.get_paper(paperid)
-            status = 'Unknwon'
-            if p.status in epi.EpisciencesDB.status_codes:
-                status = epi.EpisciencesDB.status_codes[p.status]
+        for p in selectable_papers:
+            p = conn.get_paper(p)
+            status = f'{p.status.label.en}({p.status.id})'
 
+            # st.write(p.contributors.toDict())
             summary_papers.append((
                 str(p.paperid),
                 p.title,
-                p.creator,
+                [e.surname for e in p.contributors.person_name],
                 p.submissionDate,
                 status,
                 dir(p),
@@ -150,40 +157,36 @@ def print_page(conn):
     st.markdown(
         f"<h2> <center>{p.title} </center></h2>", unsafe_allow_html=True)
     # st.markdown("### *" + '; '.join(p.creator) + "*")
-    try:
-        contrib = p.contributor
-    except AttributeError:
-        contrib = None
-    fmt = format_authors(p.creator, contrib)
+    fmt = format_authors(p.contributors)
 
     st.markdown(fmt, unsafe_allow_html=True)
     st.markdown(f'<br><h5><center> submissionDate: {p.submissionDate} </center></h5>',
                 unsafe_allow_html=True)
 
-    if hasattr(p, 'description'):
-        st.markdown(f'<div style="text-align: justify"> {p.description.strip()} </div><br>',
+    st.write(p.abstract.toDict())
+    if hasattr(p, 'abstract'):
+        st.markdown(f'<div style="text-align: justify"> {p.abstract.value} </div><br>',
                     unsafe_allow_html=True
                     )
-    p.identifier = '- ' + '\n - '.join(
-        [e.strip() for e in p.identifier if e.strip() != ''])
-    st.markdown('Identifiers:\n\n' + p.identifier)
-    if p.status in epi.EpisciencesDB.status_codes:
-        p.status = 'Status: ' + epi.EpisciencesDB.status_codes[p.status]
-    else:
-        p.status = f'<text style="background-color:red;"> Status: {p.status} </text>'
-    st.markdown(p.status, unsafe_allow_html=True)
+
+    st.markdown(f'Files:\n\n {p.files.link}')
+    st.markdown(f'Status: {p.status.label.en}')
     field = st.selectbox("Choose field", options=dir(p))
     field = getattr(p, field)
     if field is None:
         field = "Empty or not found"
-    st.write(field)
+    try:
+        st.write(field.toDict())
+    except:
+        st.write(field)
+
     with st.expander('Full Content'):
         st.write('Info from request /api/papers')
         for _p in papers:
-            if _p['docid'] == p.docid:
+            if _p['paperid'] == p.paperid:
                 st.write(_p)
         st.write(f'Info from request /api/papers/{sel}')
-        st.write(p.json)
+        st.write(p.json.toDict())
 
 
 try:
