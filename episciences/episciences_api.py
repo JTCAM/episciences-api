@@ -31,7 +31,6 @@ class EpiSciencesPaper:
         self.titles = self.journal_article.titles
         self.title = self.titles.title
         self.contributors = self.journal_article['contributors']
-        self.abstract = self.journal_article.abstract.value
         self.dates = self.document.database.current.dates
         self.status = self.document.database.current.status
         self.submissionDate = self.dates.first_submission_date
@@ -39,6 +38,13 @@ class EpiSciencesPaper:
         print('*'*70)
         print(yaml.safe_dump(self.dates.toDict()))
         self.normalize_entries()
+
+    @property
+    def abstract(self):
+        abstract = self.journal_article.abstract.value
+        if isinstance(abstract, list):
+            abstract = abstract[0]
+        return abstract
 
     def normalize_entries(self):
         if not isinstance(self.title, str):

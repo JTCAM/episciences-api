@@ -163,9 +163,8 @@ def print_page(conn):
     st.markdown(f'<br><h5><center> submissionDate: {p.submissionDate} </center></h5>',
                 unsafe_allow_html=True)
 
-    st.write(p.abstract.toDict())
     if hasattr(p, 'abstract'):
-        st.markdown(f'<div style="text-align: justify"> {p.abstract.value} </div><br>',
+        st.markdown(f'<div style="text-align: justify"> {p.abstract} </div><br>',
                     unsafe_allow_html=True
                     )
 
