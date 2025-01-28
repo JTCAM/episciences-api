@@ -139,11 +139,20 @@ def print_page(conn):
             status = f"{p.status.label.en}({p.status.id})"
 
             # st.write(p.contributors.toDict())
+            #
+            def extract_name(x):
+                if hasattr(x, "surname"):
+                    return x.surname
+                elif isinstance(x, str):
+                    return x
+                else:
+                    return str(type(x))
+
             summary_papers.append(
                 (
                     str(p.paperid),
                     p.title,
-                    [e.surname for e in p.contributors.person_name],
+                    [extract_name(e) for e in p.contributors.person_name],
                     p.submissionDate,
                     status,
                     dir(p),
