@@ -187,6 +187,8 @@ def print_page(conn):
     )
 
     abstract = getattr(p, "abstract", "No abstract")
+    if hasattr(abstract, "value"):
+        abstract = abstract.value
     if hasattr(p, "abstract"):
         st.markdown(
             f'<div style="text-align: justify"> {abstract} </div><br>',
