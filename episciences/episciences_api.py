@@ -15,6 +15,7 @@ class HttpErrorCode(Exception):
         self.code = code
         self.msg = msg
 
+
 ################################################################
 
 
@@ -30,11 +31,11 @@ class EpiSciencesPaper:
         self.journal_article = self.journal_document.journal_article
         self.titles = self.journal_article.titles
         self.title = self.titles.title
-        self.contributors = self.journal_article['contributors']
+        self.contributors = self.journal_article["contributors"]
         self.dates = self.document.database.current.dates
         self.status = self.document.database.current.status
         self.submissionDate = self.dates.first_submission_date
-        print('*'*70)
+        print("*" * 70)
         # print(yaml.safe_dump(self.dates.toDict()))
 
     @property
@@ -63,22 +64,23 @@ class EpiSciencesPaper:
         d = [e for e in self.json]
         return d
 
+
 ################################################################
 
 
 class EpisciencesDB:
 
     status_codes = {
-        -1: 'Unknown',
-        19: 'Copy editing',
-        16: 'Published',
-        6: 'Obsolete',
-        5: 'Refused',
-        0: 'Submitted',
-        2: 'In review',
-        7: 'Pending minor revision',
-        15: 'Pending major revision',
-        12: 'Reviewed'
+        -1: "Unknown",
+        19: "Copy editing",
+        16: "Published",
+        6: "Obsolete",
+        5: "Refused",
+        0: "Submitted",
+        2: "In review",
+        7: "Pending minor revision",
+        15: "Pending major revision",
+        12: "Reviewed",
     }
 
     @staticmethod
@@ -97,59 +99,62 @@ class EpisciencesDB:
         self.rvid = rvid
 
     def fetch_token(self, username=None, password=None):
-        if username is None and 'EPI_USERNAME' in os.environ:
-            username = os.environ['EPI_USERNAME']
+        if username is None and "EPI_USERNAME" in os.environ:
+            username = os.environ["EPI_USERNAME"]
         if username is None:
-            username = input('login:')
-        if password is None and 'EPI_PASSWORD' in os.environ:
-            password = os.environ['EPI_PASSWORD']
+            username = input("login:")
+        if password is None and "EPI_PASSWORD" in os.environ:
+            password = os.environ["EPI_PASSWORD"]
         if password is None:
             password = getpass.getpass()
-        url = 'https://api.episciences.org'
+        url = "https://api.episciences.org"
         r = requests.post(
-            url+'/api/login',
-            data=json.dumps({'username': username,
-                             'password': password,
-                             'code': 'jtcam'
-                             }),
+            url + "/api/login",
+            data=json.dumps(
+                {"username": username, "password": password, "code": "jtcam"}
+            ),
             headers={
                 "accept": "application/json",
                 "Content-Type": "application/json",
-            }, timeout=1000)
+            },
+            timeout=1000,
+        )
         # print(r.content)
         r = r.json()
-        if 'code' in r:
-            if r['code'] == 401:
-                raise HttpErrorCode(401, 'Error code 401 was returned')
+        if "code" in r:
+            if r["code"] == 401:
+                raise HttpErrorCode(401, "Error code 401 was returned")
         self.token = r
 
     def refresh_token(self):
         if self.token is None:
             return
-        url = 'https://api.episciences.org'
+        url = "https://api.episciences.org"
         r = requests.post(
-            url+'/api/token/refresh',
-            data=json.dumps({'refresh_token': self.token['refresh_token']}),
+            url + "/api/token/refresh",
+            data=json.dumps({"refresh_token": self.token["refresh_token"]}),
             headers={
                 "accept": "application/json",
                 "Content-Type": "application/json",
-            }, timeout=1000)
+            },
+            timeout=1000,
+        )
         r = r.json()
         self.token = r
 
     def read_token_from_file(self):
         if self.provided_token is not None:
-            self.token = {'token': self.provided_token}
+            self.token = {"token": self.provided_token}
             # logger.error(f'received token: {self.token}')
             return
         try:
-            with open('token.json') as f:
+            with open("token.json") as f:
                 self.token = json.load(f)
         except FileNotFoundError as e:
             pass
 
     def write_token_to_file(self):
-        with open('token.json', 'w') as f:
+        with open("token.json", "w") as f:
             f.write(json.dumps(self.token))
 
     def authenticate(self):
@@ -160,7 +165,7 @@ class EpisciencesDB:
             if self.token is None:
                 self.read_token_from_file()
                 self.refresh_token()
-                print('Refreshed token')
+                print("Refreshed token")
                 self.write_token_to_file()
             if not self.check_authentication():
                 self.token = None
@@ -174,8 +179,7 @@ class EpisciencesDB:
                 self.fetch_token()
                 self.write_token_to_file()
             except HttpErrorCode as e:
-                raise RuntimeError(
-                    "Incorrect login when fetching the token:", e.code)
+                raise RuntimeError("Incorrect login when fetching the token:", e.code)
         if self.token is None:
             raise RuntimeError("Error with the token (None)")
         # print('token:', self.token['token'][:12], '...')
@@ -183,28 +187,28 @@ class EpisciencesDB:
     def check_authentication(self):
         if self.token is None:
             return False
-        if 'token' not in self.token:
+        if "token" not in self.token:
             return False
         try:
-            r = self.epi_get('/api/me')
+            r = self.epi_get("/api/me")
         except HttpErrorCode as e:
             if e.code == 401:
-                print('Expired token')
+                print("Expired token")
                 return False
         # print('Logged:', r['email'])
         return True
 
     def epi_get(self, req, **kwargs):
-        url = 'https://api.episciences.org'
+        url = "https://api.episciences.org"
         url = url + req
         args = []
         for k, v in kwargs.items():
-            args.append(f'{k}={v}')
+            args.append(f"{k}={v}")
         if args:
-            url += '?'+'&'.join(args)
+            url += "?" + "&".join(args)
         headers = {
             "accept": "application/ld+json",
-            "Authorization": f"Bearer {self.token['token']}"
+            "Authorization": f"Bearer {self.token['token']}",
         }
         # print(headers)
         code = 500
@@ -214,33 +218,31 @@ class EpisciencesDB:
             if code == 500:
                 continue
             if code != 200:
-                raise HttpErrorCode(code, f'Failed to perform request: {req}')
+                raise HttpErrorCode(code, f"Failed to perform request: {req}")
             r = r.json()
-            if 'hydra:member' in r:
+            if "hydra:member" in r:
                 # print('hydra:totalItems: ', r['hydra:totalItems'])
                 # print(r['hydra:search'])
-                ret = r['hydra:member']
+                ret = r["hydra:member"]
                 return ret
 
             return r
 
     def list_papers(self):
-        r = self.epi_get('/api/papers/', rvid=self.rvid, pagination='false')
+        r = self.epi_get("/api/papers/", rvid=self.rvid, pagination="false")
         return r
 
     def list_users(self):
-        kwargs = {
-            'pagination': 'false'
-        }
-        r = self.epi_get('/api/users', **kwargs)
+        kwargs = {"pagination": "false"}
+        r = self.epi_get("/api/users", **kwargs)
         return r
 
     def get_user(self, uid):
-        r = self.epi_get(f'/api/users/{uid}')
+        r = self.epi_get(f"/api/users/{uid}")
         return r
 
     def get_paper(self, uid):
-        r = self.epi_get(f'/api/papers/{uid}')
+        r = self.epi_get(f"/api/papers/{uid}")
         return EpiSciencesPaper(r)
 
 
