@@ -75,12 +75,14 @@ class EpisciencesDB:
         19: "Copy editing",
         16: "Published",
         6: "Obsolete",
+        4: "Accepted",
         5: "Refused",
         0: "Submitted",
         2: "In review",
         7: "Pending minor revision",
         15: "Pending major revision",
         12: "Reviewed",
+        17: "Abandoned",
     }
 
     @staticmethod

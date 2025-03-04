@@ -117,14 +117,8 @@ def format_authors(authors):
 
 
 def print_page(conn):
-    if not os.path.exists("papers.json"):
-        papers = conn.list_papers()
-        print(f"Fetched {len(papers)} papers")
-        with open("papers.json", "w") as f:
-            f.write(json.dumps(papers))
-    else:
-        with open("papers.json") as f:
-            papers = json.load(f)
+    papers = conn.list_papers()
+    print(f"Fetched {len(papers)} papers")
 
     codes = epi.EpisciencesDB.status_codes.copy()
     sel_status = st.multiselect(
@@ -147,11 +141,20 @@ def print_page(conn):
             # st.write(p.contributors.toDict())
             if not isinstance(p.contributors.person_name, list):
                 p.contributors.person_name = [p.contributors.person_name]
+
+            def extract_name(x):
+                if hasattr(x, "surname"):
+                    return x.surname
+                elif isinstance(x, str):
+                    return x
+                else:
+                    return str(type(x))
+
             summary_papers.append(
                 (
                     str(p.paperid),
                     p.title,
-                    [e.surname for e in p.contributors.person_name],
+                    [extract_name(e) for e in p.contributors.person_name],
                     p.submissionDate,
                     status,
                     dir(p),
