@@ -133,7 +133,7 @@ class EpisciencesDB:
     def refresh_token(self):
         if self.token is None:
             return
-        if self.token["code"] == 401:
+        if "code" in self.token and self.token["code"] == 401:
             return
         url = "https://api.episciences.org"
         r = requests.post(

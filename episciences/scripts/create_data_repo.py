@@ -51,24 +51,33 @@ def set_study_metadata(p, args):
     zenodo_metadata = sp.utils.get_study_metadata()
     zenodo_metadata["title"] = p.title
     zenodo_metadata["related_identifiers"] = []
-    if hasattr(p, "identifier"):
-        for _id in p.identifier:
-            zenodo_metadata["related_identifiers"].append(
-                {
-                    "identifier": _id,
-                    "relation": "isCitedBy",
-                    "resource_type": "publication-article",
-                }
-            )
+    if isinstance(p.files, str):
+        p.files = [p.files]
+    elif not isinstance(p.files, list):
+        p.files = [p.files]
+    for _id in p.files:
+        zenodo_metadata["related_identifiers"].append(
+            {
+                "identifier": _id,
+                "relation": "isCitedBy",
+                "resource_type": "publication-article",
+            }
+        )
 
     # st.markdown("### *" + '; '.join(p.creator) + "*")
 
     zenodo_metadata["creators"] = []
     for e in p.contributors.person_name:
+        if not isinstance(e.affiliations.institution, list):
+            e.affiliations.institution = [e.affiliations.institution]
+        e.affiliations.institution = [
+            i.institution_name for i in e.affiliations.institution
+        ]
+        e.affiliations.institution = ";".join(e.affiliations.institution)
         zenodo_metadata["creators"].append(
             {
                 "name": f"{e.given_name} {e.surname}",
-                "affiliation": f"{e.affiliations.institution.institution_name}",
+                "affiliation": e.affiliations.institution,
                 "orcid": f"{e.ORCID.replace('https://orcid.org/', '')}",
             }
         )
