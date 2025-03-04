@@ -14,13 +14,18 @@ def fetch_info(args):
     print("Title:", p.title)
     surnames = [f"{e.given_name} {e.surname}" for e in p.contributors.person_name]
     print("Authors:", "; ".join(surnames))
+    aff = [f"{e.affiliations}" for e in p.contributors.person_name]
+    print("Affiliations:", aff)
     print("Status:", p.status)
-    # print('submissionDate:', p.submissionDate)
-    # print('Date:', p.date)
-    # print('Description:', p.description)
-    # print('Identifiers:', ', '.join(p.identifier))
-    # print('Subject:', str(p.subject))
-    # print('Available_fields:', dir(p))
+    if p.dates:
+        print("Dates:")
+        for d, v in p.dates.items():
+            print(f"\t- {d}: {v}")
+    print("Abstract:", p.abstract)
+    print("Files:", ", ".join(p.files))
+    print(p.keywords)
+    print("Keywords:", ", ".join(p.keywords))
+    print("Available_fields:", dir(p))
     return p
 
 
@@ -59,41 +64,27 @@ def set_study_metadata(p, args):
     # st.markdown("### *" + '; '.join(p.creator) + "*")
 
     zenodo_metadata["creators"] = []
-    if hasattr(p, "contributor"):
-        for auth, aff in zip(p.creator, p.contributor):
-            zenodo_metadata["creators"].append({"affiliation": aff, "name": auth})
-    else:
-        for auth in p.contributors.person_name:
-            zenodo_metadata["creators"].append(
-                {"name": f"{auth.given_name} {auth.surname}"}
-            )
+    for e in p.contributors.person_name:
+        zenodo_metadata["creators"].append(
+            {
+                "name": f"{e.given_name} {e.surname}",
+                "affiliation": f"{e.affiliations.institution.institution_name}",
+                "orcid": f"{e.ORCID.replace('https://orcid.org/', '')}",
+            }
+        )
 
-    if hasattr(p, "description"):
-        if not isinstance(p.description, str):
-            if isinstance(p.description, list):
-                p.description = p.description[0]
-            if not isinstance(p.description, str):
-                p.description = p.description["#text"]
-
+    if hasattr(p, "abstract"):
         zenodo_metadata["description"] += (
             """
 Paper Description
 -----------------
 
 """
-            + p.description
+            + p.abstract
         )
 
     zenodo_metadata["keywords"] = []
-    subject = []
-    try:
-        subject = p.subject[1:]
-    except AttributeError:
-        pass
-    for s in subject:
-        if isinstance(s, dict):
-            s = s["#text"]
-        zenodo_metadata["keywords"].append(s)
+    zenodo_metadata["keywords"] += p.keywords
     for k, v in zenodo_metadata.items():
         print(f"{k}: {v}")
 

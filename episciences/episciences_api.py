@@ -31,16 +31,18 @@ class EpiSciencesPaper:
         self.journal_article = self.journal_document.journal_article
         self.titles = self.journal_article.titles
         self.title = self.titles.title
-        self.contributors = self.journal_article["contributors"]
+        self.contributors = self.journal_article.contributors
         self.dates = self.document.database.current.dates
         self.status = self.document.database.current.status
-        self.submissionDate = self.dates.first_submission_date
+        self.keywords = self.journal_article.keywords.en
         print("*" * 70)
-        # print(yaml.safe_dump(self.dates.toDict()))
+        import yaml
+
+        # print(yaml.safe_dump(json))
 
     @property
     def abstract(self):
-        abstract = self.journal_article.abstract.value
+        abstract = self.journal_article.abstract.value.value
         if isinstance(abstract, list):
             abstract = abstract[0]
         return abstract
