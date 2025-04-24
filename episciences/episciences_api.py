@@ -34,10 +34,12 @@ class EpiSciencesPaper:
         self.contributors = self.journal_article.contributors
         self.dates = self.document.database.current.dates
         self.status = self.document.database.current.status
-        self.keywords = self.journal_article.keywords.en
-        print("*" * 70)
-        import yaml
-
+        if hasattr(self.journal_article.keywords, "en"):
+            self.keywords = self.journal_article.keywords.en
+        else:
+            self.keywords = self.journal_article.keywords
+        # print("*" * 70)
+        # import yaml
         # print(yaml.safe_dump(json))
 
     @property
