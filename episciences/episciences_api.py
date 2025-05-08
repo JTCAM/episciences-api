@@ -38,9 +38,13 @@ class EpiSciencesPaper:
             self.keywords = self.journal_article.keywords.en
         else:
             self.keywords = self.journal_article.keywords
-        # print("*" * 70)
-        # import yaml
-        # print(yaml.safe_dump(json))
+        self.editors = self.json.editors
+        self.reviewers = self.json.reviewers
+
+        print("*" * 70)
+        import yaml
+
+        print(json.keys())
 
     @property
     def abstract(self):
@@ -220,10 +224,14 @@ class EpisciencesDB:
         }
         # print(headers)
         code = 500
+        n_failure = 0
         while 1:
             r = requests.get(url, headers=headers, timeout=1000)
             code = r.status_code
             if code == 500:
+                n_failure += 1
+                if n_failure > 10:
+                    raise HttpErrorCode(code, f"Failed to perform request: {req}")
                 continue
             if code != 200:
                 raise HttpErrorCode(code, f"Failed to perform request: {req}")
