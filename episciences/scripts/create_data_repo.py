@@ -1,9 +1,10 @@
 #!/bin/env python
-import episciences as epi
-import solidipes as sp
 import subprocess
 import os
 import argparse
+import episciences as epi
+import solidipes as sp
+from dotmap import DotMap
 
 ################################################################
 
@@ -74,13 +75,18 @@ def set_study_metadata(p, args):
             i.institution_name for i in e.affiliations.institution
         ]
         e.affiliations.institution = ";".join(e.affiliations.institution)
-        zenodo_metadata["creators"].append(
-            {
-                "name": f"{e.given_name} {e.surname}",
-                "affiliation": e.affiliations.institution,
-                "orcid": f"{e.ORCID.replace('https://orcid.org/', '')}",
-            }
-        )
+        orcid = e.ORCID
+        if isinstance(orcid, DotMap):
+            if not dir(orcid):
+                orcid = None
+
+        creator = {
+            "name": f"{e.given_name} {e.surname}",
+            "affiliation": e.affiliations.institution,
+        }
+        if orcid is not None:
+            creator["orcid"] = f"{e.ORCID.replace('https://orcid.org/', '')}"
+        zenodo_metadata["creators"].append(creator)
 
     if hasattr(p, "abstract"):
         zenodo_metadata["description"] += (
