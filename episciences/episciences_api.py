@@ -48,7 +48,9 @@ class EpiSciencesPaper:
 
     @property
     def abstract(self):
-        abstract = self.journal_article.abstract.value.value
+        abstract = self.journal_article.abstract.value
+        if hasattr(abstract, "value"):
+            abstract = abstract.value
         if isinstance(abstract, list):
             abstract = abstract[0]
         return abstract
@@ -66,6 +68,7 @@ class EpiSciencesPaper:
 
         if key in self.json:
             return self.json[key]
+
         raise AttributeError(key)
 
     def __dir__(self):

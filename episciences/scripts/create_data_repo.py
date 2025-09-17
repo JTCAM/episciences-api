@@ -74,7 +74,10 @@ def set_study_metadata(p, args):
         e.affiliations.institution = [
             i.institution_name for i in e.affiliations.institution
         ]
-        e.affiliations.institution = ";".join(e.affiliations.institution)
+        
+        if isinstance(e.affiliations.institution, list):
+            e.affiliations.institution = [str(i) for i in e.affiliations.institution if (isinstance(i, DotMap) and i._map) or isinstance(i, str)]
+            e.affiliations.institution = ";".join(e.affiliations.institution)
         orcid = e.ORCID
         if isinstance(orcid, DotMap):
             if not dir(orcid):
