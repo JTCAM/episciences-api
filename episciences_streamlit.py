@@ -176,18 +176,16 @@ def print_page(conn):
         return
     p = conn.get_paper(sel)
 
-    st.markdown(f"<h2> <center>{p.title} </center></h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2> <center>{p.title[0]} </center></h2>", unsafe_allow_html=True)
     fmt = format_authors(p.contributors)
 
     st.markdown(fmt, unsafe_allow_html=True)
     st.markdown(
-        f"<br><h5><center> submissionDate: {p.submissionDate} </center></h5>",
+        f"<br><h5><center> submissionDate: {p.first_submission_date} </center></h5>",
         unsafe_allow_html=True,
     )
 
     abstract = getattr(p, "abstract", "No abstract")
-    if hasattr(abstract, "value"):
-        abstract = abstract.value
     st.markdown(
         f'<div style="text-align: justify"> {abstract} </div><br>',
         unsafe_allow_html=True,
@@ -195,8 +193,10 @@ def print_page(conn):
 
     st.markdown(f'Files: {", ".join(p.files)}')
     st.markdown(f"Status: {p.status.label.en}")
-    field = st.selectbox("Choose field", options=dir(p))
+    field = st.selectbox("Choose field", options=p.journal_article[0].keys())
     field = getattr(p, field)
+    if hasattr(field, "json"):
+        field = field.json
     if field is None:
         field = "Empty or not found"
     try:
@@ -210,7 +210,7 @@ def print_page(conn):
             if _p["paperid"] == p.paperid:
                 st.write(_p)
         st.write(f"Info from request /api/papers/{sel}")
-        st.write(p.json.toDict())
+        st.write(p.json)
 
 
 try:
