@@ -98,7 +98,7 @@ def format_authors(authors):
     auths = zip(
         authors.person_name.given_name,
         authors.person_name.surname,
-        authors.get("affiliations", "no affilation"),
+        authors.get("affiliations", "no affiliation"),
     )
     for given_name, surname, affs in auths:
         text = ""
