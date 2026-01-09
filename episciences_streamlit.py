@@ -95,10 +95,15 @@ def format_authors(authors):
             if e not in _affiliations:
                 _affiliations.append(e)
 
-    for auth in authors.person_name:
+    auths = zip(
+        authors.person_name.given_name,
+        authors.person_name.surname,
+        authors.get("affiliations", "no affilation"),
+    )
+    for given_name, surname, affs in auths:
         text = ""
-        text += f"**{auth.given_name} {auth.surname}**"
-        affs = get_author_affiliations(auth)
+        text += f"**{given_name} {surname}**"
+        affs = get_author_affiliations(affs)
         if affs:
             text += "$^{"
             affs = [_affiliations.index(e) + 1 for e in affs]
@@ -138,10 +143,6 @@ def print_page(conn):
             p = conn.get_paper(p)
             status = f"{p.status.label.en}({p.status.id})"
 
-            # st.write(p.contributors.toDict())
-            if not isinstance(p.contributors.person_name, list):
-                p.contributors.person_name = [p.contributors.person_name]
-
             def extract_name(x):
                 if hasattr(x, "surname"):
                     return x.surname
@@ -153,11 +154,10 @@ def print_page(conn):
             summary_papers.append(
                 (
                     str(p.paperid),
-                    p.title,
-                    [extract_name(e) for e in p.contributors.person_name],
-                    p.submissionDate,
+                    p.title[0],
+                    p.contributors.person_name.surname.join(","),
+                    p.dates.first_submission_date,
                     status,
-                    dir(p),
                 )
             )
 
@@ -166,7 +166,7 @@ def print_page(conn):
 
     summary_papers = pd.DataFrame(
         summary_papers,
-        columns=["paperid", "title", "authors", "submissiondate", "status", "features"],
+        columns=["paperid", "title", "authors", "submissiondate", "status"],
     )
     st.dataframe(summary_papers, use_container_width=True, hide_index=True)
 
@@ -177,7 +177,6 @@ def print_page(conn):
     p = conn.get_paper(sel)
 
     st.markdown(f"<h2> <center>{p.title} </center></h2>", unsafe_allow_html=True)
-    # st.markdown("### *" + '; '.join(p.creator) + "*")
     fmt = format_authors(p.contributors)
 
     st.markdown(fmt, unsafe_allow_html=True)

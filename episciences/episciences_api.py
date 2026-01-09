@@ -1,10 +1,11 @@
 #!/bin/env python
-import requests
-import json
 import getpass
+import json
 import logging
-from dotmap import DotMap
 import os
+
+from jsonpath_ng.ext import parse
+import requests
 
 logger = logging.getLogger()
 ################################################################
@@ -19,32 +20,71 @@ class HttpErrorCode(Exception):
 ################################################################
 
 
-class EpiSciencesPaper:
+class QueryAbleObject:
+    def __init__(self, _json):
+        self.json = _json
 
-    def __init__(self, json):
-        # import yaml
-        # print(yaml.safe_dump(json))
+    def extract_values(self, expr):
+        return [m.value for m in parse(expr).find(self.json)]
 
-        self.json = DotMap(json)
-        self.document = self.json.document
-        self.journal_document = self.document.journal
-        self.journal_article = self.journal_document.journal_article
-        self.titles = self.journal_article.titles
-        self.title = self.titles.title
-        self.contributors = self.journal_article.contributors
-        self.dates = self.document.database.current.dates
-        self.status = self.document.database.current.status
-        if hasattr(self.journal_article.keywords, "en"):
-            self.keywords = self.journal_article.keywords.en
-        else:
-            self.keywords = self.journal_article.keywords
-        self.editors = self.json.editors
-        self.reviewers = self.json.reviewers
+    def is_leaf(self, m):
+        if isinstance(m, list) and len(m) == 1:
+            if not isinstance(m[0], list) and not isinstance(m[0], dict):
+                return True
 
-        print("*" * 70)
-        import yaml
+    def get(self, key, default=None):
+        m = self.extract_values(f"$..{key}")
+        if m:
+            if self.is_leaf(m):
+                return m[0]
+            elif isinstance(m, str):
+                return m
+            return QueryAbleObject(m)
+        elif default is not None:
+            return default
 
-        print(json.keys())
+        raise AttributeError(key)
+
+    def __getattr__(self, key):
+        try:
+            return self.get(key)
+        except AttributeError:
+            # print(json.dumps(self.json, indent=2, sort_keys=True, ensure_ascii=False))
+            raise AttributeError(key)
+
+    def __iter__(self):
+        if isinstance(self.json, list):
+
+            def get_leaf(e):
+                if self.is_leaf(e):
+                    return e[0]
+                elif isinstance(e, str):
+                    return e
+                return QueryAbleObject(e)
+
+            t = [get_leaf(e) for e in self.json]
+            return t.__iter__()
+        return self.json.__iter__()
+
+    def __repr__(self):
+        if self.is_leaf(self.json):
+            return self.json[0].__repr__()
+        return self.json.__repr__()
+
+    def __getitem__(self, idx):
+        return self.json[idx]
+
+    def join(self, sep):
+        return sep.join(self.json)
+
+
+################################################################
+
+
+class EpiSciencesPaper(QueryAbleObject):
+    def __init__(self, _json):
+        # print(json.dumps(_json, indent=2, sort_keys=True, ensure_ascii=False))
+        self.json = _json
 
     @property
     def abstract(self):
@@ -62,25 +102,11 @@ class EpiSciencesPaper:
             files = [files]
         return [f.link for f in files]
 
-    def __getattr__(self, key):
-        if key in self.document:
-            return self.document[key]
-
-        if key in self.json:
-            return self.json[key]
-
-        raise AttributeError(key)
-
-    def __dir__(self):
-        d = [e for e in self.json]
-        return d
-
 
 ################################################################
 
 
 class EpisciencesDB:
-
     status_codes = {
         -1: "Unknown",
         19: "Copy editing",
