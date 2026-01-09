@@ -29,48 +29,31 @@ def printPaperDetail(paper_id, conn):
 
 
 def printPaperNoDetail(paper, users):
-    print("paperID:", paper["@id"])
-    if "@type" in paper:
-        print("Type:", paper["@type"])
-    if "status" in paper:
-        status = epi.EpisciencesDB.getStatusFromCode(paper["status"])
-        print("Status: ", status)
-    if "user" in paper:
-        auth_id = paper["user"]["@id"]
-        if auth_id in users:
-            user = users[auth_id]
-        else:
-            user = ("not found: ", paper["user"])
-
-        print("Author:", user)
-    if "editors" in paper and paper["editors"]:
-        for editor in paper["editors"]:
-            if "/api/users/" + editor in users:
-                editor = users["/api/users/" + editor]
-            print("Editor: ", editor)
-    if "review" in paper and paper["review"]:
-        print("Review: ", paper["review"])
-    if "copyEditors" in paper and paper["copyEditors"]:
-        for editor in paper["copyEditors"]:
-            if "/api/users/" + editor in users:
-                editor = users["/api/users/" + editor]
-            print("copyEditor: ", editor)
+    code = paper.status
+    status = epi.EpisciencesDB.getStatusFromCode(code)
+    print(
+        paper["@type"],
+        "paperid:",
+        paper.paperid,
+        "docid:",
+        paper.docid,
+        "status:",
+        f"{status}({code})",
+    )
 
 
 ################################################################
 
 
-def printPapersSummary(conn, args):
+def printPapers(conn, args):
     papers = conn.list_papers()
 
     # users = conn.list_users()
     users = conn.list_users()
     users = dict([(e["@id"], e["screenName"]) for e in users])
     for e in papers:
-        if "status" in e:
-            status = epi.EpisciencesDB.getStatusFromCode(e["status"])
-        else:
-            status = "Unknown"
+        e = epi.episciences_api.QueryAbleObject(e)
+        status = epi.EpisciencesDB.getStatusFromCode(e.status)
 
         if args.status is not None and status != args.status:
             continue
@@ -79,7 +62,7 @@ def printPapersSummary(conn, args):
             print("*" * 70)
             print(e)
             try:
-                printPaperDetail(e["paperid"], conn)
+                printPaperDetail(e.paperid, conn)
             except epi.episciences_api.HttpErrorCode as e:
                 print(e)
 
@@ -87,6 +70,28 @@ def printPapersSummary(conn, args):
             printPaperNoDetail(e, users)
 
     print(f"Found {len(papers)} papers")
+
+
+################################################################
+
+
+def saveJSON(conn, args):
+    papers = conn.list_papers()
+    list_papers = []
+    from tqdm import tqdm
+
+    for e in tqdm(papers):
+        e = epi.episciences_api.QueryAbleObject(e)
+        try:
+            p = conn.get_paper(e.docid)
+        except epi.episciences_api.HttpErrorCode as _e:
+            print("error fetching:", e)
+            print(_e)
+            continue
+        list_papers.append(p.json)
+
+    with open("papers.json", "w") as f:
+        f.write(json.dumps(list_papers, indent=2, sort_keys=True, ensure_ascii=False))
 
 
 ################################################################
@@ -103,6 +108,8 @@ def main():
 
     parser.add_argument("--details", action="store_true", help="Ask for full details")
 
+    parser.add_argument("--json", action="store_true", help="Ask to dump to json file")
+
     parser.add_argument(
         "--cmd", default=None, type=str, help="Provide a command to the api"
     )
@@ -114,11 +121,13 @@ def main():
     conn = epi.EpisciencesDB()
     if args.paper:
         printPaperDetail(args.paper, conn)
+    elif args.json:
+        saveJSON(conn, args)
     elif args.cmd:
         r = conn.epi_get(args.cmd)
         print(yaml.dump(r))
     else:
-        printPapersSummary(conn, args)
+        printPapers(conn, args)
 
 
 if __name__ == "__main__":

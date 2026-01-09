@@ -114,7 +114,7 @@ class EpisciencesDB:
         6: "Obsolete",
         4: "Accepted",
         5: "Refused",
-        0: "Submitted",
+        0: "submitted",
         2: "In review",
         7: "Pending minor revision",
         15: "Pending major revision",
@@ -191,7 +191,7 @@ class EpisciencesDB:
         try:
             with open("token.json") as f:
                 self.token = json.load(f)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             pass
 
     def write_token_to_file(self):
@@ -231,7 +231,7 @@ class EpisciencesDB:
         if "token" not in self.token:
             return False
         try:
-            r = self.epi_get("/api/me")
+            self.epi_get("/api/me")
         except HttpErrorCode as e:
             if e.code == 401:
                 print("Expired token")
