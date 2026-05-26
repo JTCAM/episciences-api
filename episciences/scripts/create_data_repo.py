@@ -1,7 +1,8 @@
 #!/bin/env python
-import subprocess
-import os
 import argparse
+import os
+import subprocess
+
 import episciences as epi
 import solidipes as sp
 from dotmap import DotMap
@@ -19,13 +20,11 @@ def fetch_info(args):
     print("Affiliations:", aff)
     print("Status:", p.status)
     if p.dates:
-        print("Dates:")
-        for d, v in p.dates.items():
-            print(f"\t- {d}: {v}")
+        print(f"Dates: {p.dates}")
     print("Abstract:", p.abstract)
     print("Files:", ", ".join(p.files))
-    print(p.keywords)
-    print("Keywords:", ", ".join(p.keywords))
+    print(p.keywords[0])
+    print("Keywords:", ", ".join(p.keywords[0]))
     print("Available_fields:", dir(p))
     return p
 
@@ -50,7 +49,7 @@ def set_study_metadata(p, args):
     cwd = os.getcwd()
     os.chdir(args.loc)
     zenodo_metadata = sp.utils.get_study_metadata()
-    zenodo_metadata["title"] = p.title
+    zenodo_metadata["title"] = p.title[0]
     zenodo_metadata["related_identifiers"] = []
     if isinstance(p.files, str):
         p.files = [p.files]
@@ -68,27 +67,34 @@ def set_study_metadata(p, args):
     # st.markdown("### *" + '; '.join(p.creator) + "*")
 
     zenodo_metadata["creators"] = []
-    for e in p.contributors.person_name:
-        if not isinstance(e.affiliations.institution, list):
-            e.affiliations.institution = [e.affiliations.institution]
-        e.affiliations.institution = [
-            i.institution_name for i in e.affiliations.institution
-        ]
-        
-        if isinstance(e.affiliations.institution, list):
-            e.affiliations.institution = [str(i) for i in e.affiliations.institution if (isinstance(i, DotMap) and i._map) or isinstance(i, str)]
-            e.affiliations.institution = ";".join(e.affiliations.institution)
+    for e in p.contributors.person_name[0]:
+        print(e)
+
+        # if not isinstance(e.affiliations.institution, list):
+        #     e.affiliations.institution = [e.affiliations.institution]
+        # e.affiliations.institution = [
+        #     i.institution_name for i in e.affiliations.institution
+        # ]
+
+        #        if isinstance(e.affiliations.institution, list):
+        #            e.affiliations.institution = [
+        #                str(i)
+        #                for i in e.affiliations.institution
+        #                if (isinstance(i, DotMap) and i._map) or isinstance(i, str)
+        #            ]
+        #            e.affiliations.institution = ";".join(e.affiliations.institution)
         orcid = e.ORCID
-        if isinstance(orcid, DotMap):
-            if not dir(orcid):
-                orcid = None
+        # if isinstance(orcid, DotMap):
+        #     if not dir(orcid):
+        #        orcid = None
 
         creator = {
             "name": f"{e.given_name} {e.surname}",
-            "affiliation": e.affiliations.institution,
+            "affiliation": e.affiliations.institution.institution_name,
         }
+        print(orcid)
         if orcid is not None:
-            creator["orcid"] = f"{e.ORCID.replace('https://orcid.org/', '')}"
+            creator["orcid"] = f"{orcid.replace('https://orcid.org/', '')}"
         zenodo_metadata["creators"].append(creator)
 
     if hasattr(p, "abstract"):
@@ -102,10 +108,15 @@ Paper Description
         )
 
     zenodo_metadata["keywords"] = []
-    zenodo_metadata["keywords"] += p.keywords
+    zenodo_metadata["keywords"] += p.keywords.en[0]
     for k, v in zenodo_metadata.items():
         print(f"{k}: {v}")
 
+    import json
+
+    from episciences.episciences_api import to_json
+
+    print(json.dumps(to_json(zenodo_metadata), indent=1))
     sp.utils.set_study_metadata(zenodo_metadata)
     os.chdir(cwd)
 

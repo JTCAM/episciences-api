@@ -4,8 +4,8 @@ import json
 import logging
 import os
 
-from jsonpath_ng.ext import parse
 import requests
+from jsonpath_ng.ext import parse
 
 logger = logging.getLogger()
 ################################################################
@@ -15,6 +15,24 @@ class HttpErrorCode(Exception):
     def __init__(self, code, msg):
         self.code = code
         self.msg = msg
+
+
+################################################################
+def to_json(data):
+    if isinstance(data, QueryAbleObject):
+        data = data.json
+
+    # If it is a dictionary, scan all keys and values
+    if isinstance(data, dict):
+        keys = data.keys()
+        for key in keys:
+            data[key] = to_json(data[key])
+
+    # If it is a list, scan all items
+    elif isinstance(data, list):
+        data = [to_json(e) for e in data]
+
+    return data
 
 
 ################################################################
@@ -72,10 +90,16 @@ class QueryAbleObject:
         return self.json.__repr__()
 
     def __getitem__(self, idx):
-        return self.json[idx]
+        return QueryAbleObject(self.json[idx])
 
     def join(self, sep):
         return sep.join(self.json)
+
+    def items(self):
+        return self.json.items()
+
+    def to_json(self):
+        return to_json(self)
 
 
 ################################################################
