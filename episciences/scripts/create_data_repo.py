@@ -16,8 +16,11 @@ def fetch_info(args):
     print("Title:", p.title)
     surnames = [f"{e.given_name} {e.surname}" for e in p.contributors.person_name]
     print("Authors:", "; ".join(surnames))
-    aff = [f"{e.affiliations}" for e in p.contributors.person_name]
-    print("Affiliations:", aff)
+    try:
+        aff = [f"{e.affiliations}" for e in p.contributors.person_name]
+        print("Affiliations:", aff)
+    except AttributeError:
+        pass
     print("Status:", p.status)
     if p.dates:
         print(f"Dates: {p.dates}")
