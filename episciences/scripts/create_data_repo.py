@@ -89,7 +89,7 @@ def set_study_metadata(p, args):
         try:
             orcid = e.ORCID
         except AttributeError:
-            orcid = "NOORCID"
+            orcid = None
 
         # if isinstance(orcid, DotMap):
         #     if not dir(orcid):
@@ -107,19 +107,25 @@ def set_study_metadata(p, args):
         if orcid is not None:
             creator["orcid"] = f"{orcid.replace('https://orcid.org/', '')}"
         zenodo_metadata["creators"].append(creator)
-
     if hasattr(p, "abstract"):
+        abstract = p.abstract
+        if not p.is_leaf('abstract'):
+            abstract = abstract[0][0].json
         zenodo_metadata["description"] += (
             """
 Paper Description
 -----------------
 
 """
-            + p.abstract
+            + abstract
         )
-
+    
     zenodo_metadata["keywords"] = []
-    zenodo_metadata["keywords"] += p.keywords.en[0]
+    try:
+        keywords = p.keywords.en[0]
+    except AttributeError:
+        keywords = p.keywords[0]
+    zenodo_metadata["keywords"] += keywords
     for k, v in zenodo_metadata.items():
         print(f"{k}: {v}")
 
