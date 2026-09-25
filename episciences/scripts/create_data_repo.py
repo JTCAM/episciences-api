@@ -95,9 +95,13 @@ def set_study_metadata(p, args):
         #     if not dir(orcid):
         #        orcid = None
 
+        try:
+            affiliations = e.affiliations.institution.institution_name
+        except AttributeError:
+            affiliations = "no affiliations"
         creator = {
             "name": f"{e.given_name} {e.surname}",
-            "affiliation": e.affiliations.institution.institution_name,
+            "affiliation": affiliations,
         }
         print(orcid)
         if orcid is not None:
