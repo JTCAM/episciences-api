@@ -86,7 +86,11 @@ def set_study_metadata(p, args):
         #                if (isinstance(i, DotMap) and i._map) or isinstance(i, str)
         #            ]
         #            e.affiliations.institution = ";".join(e.affiliations.institution)
-        orcid = e.ORCID
+        try:
+            orcid = e.ORCID
+        except AttributeError:
+            orcid = "NOORCID"
+
         # if isinstance(orcid, DotMap):
         #     if not dir(orcid):
         #        orcid = None
