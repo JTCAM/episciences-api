@@ -1,1 +1,21 @@
+# Credentials — never commit tokens
 token.json
+auth.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Fetched data
+papers.json
+paper.json
+*.csv
+*.xlsx
+
+# Editors
+.vscode/
+.idea/

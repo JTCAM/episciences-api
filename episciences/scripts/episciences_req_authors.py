@@ -131,7 +131,7 @@ def getAuthors(conn):
 
 
 def main():
-    conn = epi.EpisciencesDB()
+    conn = epi.EpisciencesDB(interactive=True)
     authors = getAuthors(conn)
     users = getUsers(conn)
 

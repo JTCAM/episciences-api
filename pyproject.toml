@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "episciences-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "Python module to use the episciences api and manipulate papers and users"
 authors = ["Guillaume Anciaux <guillaume.anciaux@epfl.ch>"]
 license = "GPL"
@@ -9,14 +9,24 @@ packages = [{include = "episciences"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-extra-streamlit-components = "^0.1.70"
-streamlit = "^1.31.1"
 xmltodict = "^0.13.0"
 dotmap = "^1.3.30"
 pyyaml = "^6.0.2"
 packaging = "^24.2"
 jsonpath-ng = "^1.7.0"
+requests = "^2.32"
+mcp = ">=1.0,<2"
 
+# The streamlit explorator is optional: install with `poetry install --extras streamlit`
+streamlit = {version = "^1.31.1", optional = true}
+extra-streamlit-components = {version = "^0.1.70", optional = true}
+
+[tool.poetry.extras]
+streamlit = ["streamlit", "extra-streamlit-components"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+requests-mock = "^1.12"
 
 [build-system]
 requires = ["poetry-core"]
@@ -26,3 +36,7 @@ build-backend = "poetry.core.masonry.api"
 epi = "episciences.scripts.episciences_req:main"
 epi-dataset = "episciences.scripts.create_data_repo:main"
 epi-authors = "episciences.scripts.episciences_req_authors:main"
+episciences-mcp = "episciences.mcp_server:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

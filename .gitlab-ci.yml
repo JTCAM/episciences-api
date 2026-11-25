@@ -1,0 +1,43 @@
+# GitLab CI for the episciences-api project
+#
+# - `tests`: fully mocked unit tests, no credentials needed.
+# - `fetch-papers`: example of a live authenticated job. It logs in with the
+#   masked CI variables EPI_USERNAME / EPI_PASSWORD (Settings >
+#   CI/CD > Variables, flagged "Protected" and "Masked"). The token lives
+#   only for the duration of the job (1h lifetime, renewed automatically).
+
+stages: [test, live]
+
+variables:
+  PIP_CACHE_DIR: .pip-cache
+
+cache:
+  paths:
+    - .pip-cache
+
+tests:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install pytest requests-mock .
+    - pytest -v
+
+fetch-papers:
+  stage: live
+  image: python:3.12
+  variables:
+    EPI_USERNAME: $EPI_USERNAME   # masked CI variable
+    EPI_PASSWORD: $EPI_PASSWORD   # masked CI variable
+    EPI_JOURNAL: jtcam
+  script:
+    - pip install .
+    # The library logs in from EPI_USERNAME/EPI_PASSWORD automatically and
+    # stores the token in $HOME/.local/share/opencode/auth.json for the job.
+    - epi --json
+  artifacts:
+    paths:
+      - papers.json
+    expire_in: 1 week
+  rules:
+    - if: $EPI_USERNAME && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual

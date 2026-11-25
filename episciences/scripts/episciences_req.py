@@ -118,7 +118,7 @@ def main():
 
     args = parser.parse_args()
 
-    conn = epi.EpisciencesDB()
+    conn = epi.EpisciencesDB(interactive=True)
     if args.paper:
         printPaperDetail(args.paper, conn)
     elif args.json:

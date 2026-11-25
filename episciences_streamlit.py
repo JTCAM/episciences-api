@@ -1,8 +1,10 @@
 #!/bin/env python
 import json
 import os
+
 import streamlit as st
 import extra_streamlit_components as stx
+
 import episciences as epi
 
 st.set_page_config(
@@ -20,16 +22,15 @@ st.markdown(
 main_box = st.container()
 auth_box = st.container()
 
-cookie_manager = None
 cookie_manager = stx.CookieManager()
-cookies = cookie_manager.get_all()
-# st.write(cookies)
+cookies = cookie_manager.get_all() or {}
 ################################################################
 
 
 class STEpisciencesDB(epi.EpisciencesDB):
 
     def __init__(self, *args, **kwargs):
+        kwargs.setdefault("interactive", True)
         super().__init__(*args, **kwargs)
 
     def fetch_token(self, username=None, password=None):
@@ -38,80 +39,96 @@ class STEpisciencesDB(epi.EpisciencesDB):
             password = st.text_input("API Password", value=password, type="password")
             button = st.form_submit_button("connect")
             if button:
-                if (
-                    username == ""
-                    or password == ""
-                    or username is None
-                    or password is None
-                ):
+                if not username or not password:
                     st.error("Wrong credentials")
                     return
-
                 try:
                     super().fetch_token(username, password)
                 except epi.HttpErrorCode as e:
                     st.error("Wrong credentials")
-                    raise e
-                # st.write('pas here')
-                # st.write(self.token)
-                cookie_manager.set("episciences_api_token", self.token)
+                    return
+                self.write_token_to_file()
+                st.rerun()
 
     def read_token_from_file(self):
-        if (
-            "episciences_api_token" in cookies
-            and "token" in cookies["episciences_api_token"]
-        ):
-            self.token = cookies["episciences_api_token"]
+        raw = cookies.get("episciences_api_token")
+        if not raw:
+            return super().read_token_from_file()
+        try:
+            data = json.loads(raw) if isinstance(raw, str) else raw
+        except (json.JSONDecodeError, TypeError):
+            data = raw
+        if isinstance(data, dict) and "token" in data:
+            self.token = {"token": data["token"], "refresh_token": data.get("refresh_token")}
+        elif isinstance(data, str):
+            self.token = {"token": data}
 
     def write_token_to_file(self):
-        pass
+        if self.token and "token" in self.token:
+            cookie_manager.set(
+                "episciences_api_token",
+                json.dumps(
+                    {
+                        "token": self.token["token"],
+                        "refresh_token": self.token.get("refresh_token"),
+                    }
+                ),
+            )
 
 
 ################################################################
 
 
-def format_authors(authors):
+def format_authors(contributors):
     _authors = []
     _affiliations = []
 
     def get_author_affiliations(author):
-        if "affiliations" not in author:
+        if not hasattr(author, "get"):
             return []
-
-        affs = author.affiliations.institution
+        affs = author.get("affiliations", None)
+        if affs is None:
+            return []
+        if not hasattr(affs, "get"):
+            return []
+        institutions = affs.get("institution", None)
+        if institutions is None:
+            return []
+        if not isinstance(institutions.json, list):
+            institutions = [institutions]
         res = []
-        if not isinstance(affs, list):
-            affs = [affs]
-
-        for e in affs:
-            name = e.institution_name
-            res.append(name)
+        for e in institutions:
+            name = e.get("institution_name", None)
+            if name is None:
+                continue
+            if not isinstance(name.json, list):
+                name = [name]
+            for n in name:
+                res.append(str(n))
         return res
 
-    for author in authors.person_name:
-        affs = get_author_affiliations(author)
+    persons = contributors.get("person_name", None) if hasattr(contributors, "get") else None
+    if persons is None:
+        return ""
+    if not isinstance(persons.json, list):
+        persons = [persons]
 
+    for author in persons:
+        affs = get_author_affiliations(author)
         for e in affs:
             if e not in _affiliations:
                 _affiliations.append(e)
 
-    auths = zip(
-        authors.person_name.given_name,
-        authors.person_name.surname,
-        authors.get("affiliations", "no affiliation"),
-    )
-    for given_name, surname, affs in auths:
-        text = ""
-        text += f"**{given_name} {surname}**"
-        affs = get_author_affiliations(affs)
+    for author in persons:
+        given_name = author.get("given_name", "")
+        surname = author.get("surname", "")
+        text = f"**{given_name} {surname}**"
+        affs = get_author_affiliations(author)
         if affs:
-            text += "$^{"
-            affs = [_affiliations.index(e) + 1 for e in affs]
-            aff = [str(e) for e in affs]
-            text += f'{",".join(aff)}'
-            text += "}$"
-
+            indexes = [str(_affiliations.index(e) + 1) for e in affs]
+            text += f"$^{{ {','.join(indexes)} }}$"
         _authors.append(text)
+
     formatted = "**<h4><center> " + "; ".join(_authors) + " </center></h4>**\n"
     for idx, aff in enumerate(_affiliations):
         formatted += f"<center><sup>{idx+1}</sup> <i>{aff}</i></center>\n"
@@ -123,7 +140,7 @@ def format_authors(authors):
 
 def print_page(conn):
     papers = conn.list_papers()
-    print(f"Fetched {len(papers)} papers")
+    st.toast(f"Fetched {len(papers)} papers")
 
     codes = epi.EpisciencesDB.status_codes.copy()
     sel_status = st.multiselect(
@@ -133,35 +150,30 @@ def print_page(conn):
         default=[19],
     )
     sel_status = [int(s) for s in sel_status]
-    # st.write(sel_status)
 
-    selectable_papers = [p["paperid"] for p in papers if p["status"] in sel_status]
+    selectable_papers = [p["paperid"] for p in papers if p.get("status") in sel_status]
+    status_by_id = {str(p.get("paperid")): p.get("status") for p in papers}
 
     summary_papers = []
     with st.spinner("Fetching data, please wait..."):
-        for p in selectable_papers:
-            p = conn.get_paper(p)
-            status = f"{p.status.label.en}({p.status.id})"
-
-            def extract_name(x):
-                if hasattr(x, "surname"):
-                    return x.surname
-                elif isinstance(x, str):
-                    return x
-                else:
-                    return str(type(x))
-
+        for paper_id in selectable_papers:
+            p = conn.get_paper(paper_id, list_data={"status": status_by_id.get(str(paper_id))})
+            title = p.title or "(no title)"
+            authors = ", ".join(
+                f"{a['given_name']} {a['surname']}"
+                for a in p.authors
+                if a.get("surname")
+            )
             summary_papers.append(
                 (
                     str(p.paperid),
-                    p.title[0],
-                    p.contributors.person_name.surname.join(","),
-                    p.dates.first_submission_date,
-                    status,
+                    title,
+                    authors,
+                    p.first_submission_date,
+                    p.status_label,
                 )
             )
 
-    # st.write(summary_papers)
     import pandas as pd
 
     summary_papers = pd.DataFrame(
@@ -174,40 +186,46 @@ def print_page(conn):
     if sel is None:
         st.warning("No paper selected")
         return
-    p = conn.get_paper(sel)
+    p = conn.get_paper(sel, list_data={"status": status_by_id.get(str(sel))})
 
-    st.markdown(f"<h2> <center>{p.title[0]} </center></h2>", unsafe_allow_html=True)
-    fmt = format_authors(p.contributors)
-
+    st.markdown(f"<h2> <center>{p.title} </center></h2>", unsafe_allow_html=True)
+    fmt = format_authors(p.contributors) if p.contributors is not None else ""
     st.markdown(fmt, unsafe_allow_html=True)
-    st.markdown(
-        f"<br><h5><center> submissionDate: {p.first_submission_date} </center></h5>",
-        unsafe_allow_html=True,
-    )
 
-    abstract = getattr(p, "abstract", "No abstract")
+    submission = p.first_submission_date
+    if submission:
+        st.markdown(
+            f"<br><h5><center> submissionDate: {submission} </center></h5>",
+            unsafe_allow_html=True,
+        )
+
+    abstract = p.abstract or "No abstract"
     st.markdown(
         f'<div style="text-align: justify"> {abstract} </div><br>',
         unsafe_allow_html=True,
     )
 
-    st.markdown(f'Files: {", ".join(p.files)}')
-    st.markdown(f"Status: {p.status.label.en}")
-    field = st.selectbox("Choose field", options=p.journal_article[0].keys())
-    field = getattr(p, field)
+    st.markdown(f'Files: {", ".join(p.files) if p.files else "none"}')
+    st.markdown(f"Status: {p.status_label}")
+    fields = list(p.journal_article[0].keys()) if p.get_or_none("journal_article") is not None else []
+    if not fields:
+        st.warning("No journal article fields available")
+        return
+    field = st.selectbox("Choose field", options=fields)
+    field = p.get(field)
     if hasattr(field, "json"):
         field = field.json
     if field is None:
         field = "Empty or not found"
     try:
         st.write(field.toDict())
-    except:
+    except Exception:
         st.write(field)
 
     with st.expander("Full Content"):
         st.write("Info from request /api/papers")
         for _p in papers:
-            if _p["paperid"] == p.paperid:
+            if _p.get("paperid") == p.paperid:
                 st.write(_p)
         st.write(f"Info from request /api/papers/{sel}")
         st.write(p.json)
@@ -215,19 +233,25 @@ def print_page(conn):
 
 try:
     conn = STEpisciencesDB()
-    # auth_box.empty()
+except (epi.AuthenticationError, RuntimeError) as e:
+    conn = None
+    auth_error = e
 
-    def reset():
-        st.write("logging out")
-        cookie_manager.set("episciences_api_token", {})
-        os.remove("papers.json")
-        st.experimental_rerun()
+with main_box:
+    if conn is not None:
+        def reset():
+            cookie_manager.set("episciences_api_token", "")
+            conn.forget_token()
+            st.rerun()
 
-    with main_box:
         lout = st.button("logout and refresh")
         if lout:
             reset()
-        # st.write(cookies)
-        print_page(conn)
-except RuntimeError as e:
-    st.error(e)
+        try:
+            print_page(conn)
+        except epi.HttpErrorCode as e:
+            st.error(f"API error: {e}")
+    else:
+        st.info("Connect to the Episciences API to browse the papers.")
+        conn = STEpisciencesDB(auto_authenticate=False)
+        conn.fetch_token()
